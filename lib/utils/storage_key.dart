@@ -124,6 +124,7 @@ abstract final class SettingBoxKey {
       darkVideoPage = 'darkVideoPage',
       enableSlideVolumeBrightness = 'enableSlideVolumeBrightness',
       enableSlideFS = 'enableSlideFS',
+      enableSlideSpeed = 'enableSlideSpeed',
       retryCount = 'retryCount',
       retryDelay = 'retryDelay',
       liveQuality = 'liveQuality',
@@ -248,6 +249,8 @@ abstract final class SettingBoxKey {
 abstract final class LocalCacheKey {
   static const String historyPause = 'historyPause',
       blackMids = 'blackMids',
+      dislikedBvids = 'dislikedBvids',
+      videoTagFilter = 'videoTagFilter',
       danmakuFilterRules = 'danmakuFilterRules',
       mixinKey = 'mixinKey',
       timeStamp = 'timeStamp';

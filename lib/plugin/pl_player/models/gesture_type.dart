@@ -7,4 +7,6 @@ enum GestureType {
   horizontal,
   center_up,
   center_down,
+  /// 中途区域上下滑动：调节播放速度
+  speed,
 }

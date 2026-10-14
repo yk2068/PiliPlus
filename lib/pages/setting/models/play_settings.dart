@@ -104,6 +104,13 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableSlideFS,
     defaultVal: true,
   ),
+  const SwitchModel(
+    title: '中间滑动调节播放速度',
+    subtitle: '开启后，播放器中间区域上下滑动为调速；关闭则恢复为全屏切换',
+    leading: Icon(Icons.speed),
+    setKey: SettingBoxKey.enableSlideSpeed,
+    defaultVal: true,
+  ),
   if (PlatformUtils.isMobile)
     NormalModel(
       title: '播放器音量',

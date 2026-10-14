@@ -85,6 +85,43 @@ abstract final class Pref {
     GlobalData().blackMids..remove(mid),
   );
 
+  /// 点踩过的视频 bvid 集合
+  static Set<String> get dislikedBvids =>
+      _localCache.get(LocalCacheKey.dislikedBvids, defaultValue: <String>{});
+
+  static set dislikedBvids(Set<String> dislikedBvidsSet) =>
+      _localCache.put(LocalCacheKey.dislikedBvids, dislikedBvidsSet);
+
+  static void addDislikedBvid(String bvid) => _localCache.put(
+    LocalCacheKey.dislikedBvids,
+    GlobalData().dislikedBvids..add(bvid),
+  );
+
+  static void removeDislikedBvid(String bvid) => _localCache.put(
+    LocalCacheKey.dislikedBvids,
+    GlobalData().dislikedBvids..remove(bvid),
+  );
+
+  static bool isDislikedBvid(String? bvid) =>
+      bvid != null && GlobalData().dislikedBvids.contains(bvid);
+
+  /// 视频标签过滤名单
+  static Set<String> get videoTagFilter =>
+      _localCache.get(LocalCacheKey.videoTagFilter, defaultValue: <String>{});
+
+  static set videoTagFilter(Set<String> videoTagFilterSet) =>
+      _localCache.put(LocalCacheKey.videoTagFilter, videoTagFilterSet);
+
+  static void addVideoTagFilter(String tag) => _localCache.put(
+    LocalCacheKey.videoTagFilter,
+    GlobalData().videoTagFilter..add(tag),
+  );
+
+  static void removeVideoTagFilter(String tag) => _localCache.put(
+    LocalCacheKey.videoTagFilter,
+    GlobalData().videoTagFilter..remove(tag),
+  );
+
   static MemberTabType get memberTab =>
       MemberTabType.values[_setting.get(
         SettingBoxKey.memberTab,
@@ -554,6 +591,10 @@ abstract final class Pref {
 
   static bool get enableSlideFS =>
       _setting.get(SettingBoxKey.enableSlideFS, defaultValue: true);
+
+  /// 播放器中间区域上下滑动切换播放速度（开启时该区域不再用于全屏切换）
+  static bool get enableSlideSpeed =>
+      _setting.get(SettingBoxKey.enableSlideSpeed, defaultValue: true);
 
   static int get retryCount =>
       _setting.get(SettingBoxKey.retryCount, defaultValue: 2);

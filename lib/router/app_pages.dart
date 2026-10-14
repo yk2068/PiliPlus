@@ -65,6 +65,7 @@ import 'package:PiliPlus/pages/sponsor_block/view.dart';
 import 'package:PiliPlus/pages/subscription/view.dart';
 import 'package:PiliPlus/pages/subscription_detail/view.dart';
 import 'package:PiliPlus/pages/video/view.dart';
+import 'package:PiliPlus/pages/video_tag_filter/view.dart';
 import 'package:PiliPlus/pages/webview/view.dart';
 import 'package:PiliPlus/pages/whisper/view.dart';
 import 'package:PiliPlus/pages/whisper_detail/view.dart';
@@ -110,6 +111,7 @@ class Routes {
     GetPage(name: '/memberSearch', page: () => const MemberSearchPage()),
     //
     GetPage(name: '/blackListPage', page: () => const BlackListPage()),
+    GetPage(name: '/videoTagFilter', page: () => const VideoTagFilterPage()),
     GetPage(name: '/colorSetting', page: () => const ColorSelectPage()),
     GetPage(name: '/fontSetting', page: () => const FontSettingPage()),
     // 屏幕帧率

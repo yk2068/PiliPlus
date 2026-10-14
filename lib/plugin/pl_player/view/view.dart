@@ -942,6 +942,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   void _onPanStart(ScaleStartDetails details) {
     _gestureType = null;
+    _speedAccum = 0;
     _initialFocalPoint = details.localFocalPoint;
   }
 
@@ -998,7 +999,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
         _gestureType = .horizontal;
       } else if (dy > 3 * dx) {
         if (!plPlayerController.enableSlideVolumeBrightness &&
-            !plPlayerController.enableSlideFS) {
+            !plPlayerController.enableSlideFS &&
+            !plPlayerController.enableSlideSpeed) {
           return;
         }
 
@@ -1015,11 +1017,16 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
             _gestureType = .left;
           }
         } else if (tapPosition < sectionWidth * 2) {
-          if (!plPlayerController.enableSlideFS) {
+          // 中间区域：默认上下滑调速；关掉调速开关后恢复为全屏切换
+          if (plPlayerController.enableSlideSpeed) {
+            _speedAccum = 0;
+            _gestureType = .speed;
+          } else if (plPlayerController.enableSlideFS) {
+            // 全屏
+            _gestureType = .center;
+          } else {
             return;
           }
-          // 全屏
-          _gestureType = .center;
         } else {
           if (!plPlayerController.enableSlideVolumeBrightness) {
             return;
@@ -1105,6 +1112,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
           );
         }
       }
+    } else if (_gestureType == .speed) {
+      // 中间区域 👆👇 上下滑动调节播放速度
+      _onSpeedDrag(delta.dy);
     } else if (_gestureType == .right) {
       // 右边区域
       final double level = maxHeight * 0.5;
@@ -1129,6 +1139,76 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     }
     _initialFocalPoint = null;
     _gestureType = null;
+  }
+
+  /// 每滑动这么多像素切换一档播放速度
+  static const double _kSpeedDragStep = 40.0;
+  double _speedAccum = 0.0;
+
+  void _onSpeedDrag(double dy) {
+    if (plPlayerController.isLive) return;
+    // 上滑 dy < 0 -> 加速；下滑 dy > 0 -> 减速
+    _speedAccum -= dy;
+    while (_speedAccum.abs() >= _kSpeedDragStep) {
+      final bool faster = _speedAccum > 0;
+      _speedAccum -= faster ? _kSpeedDragStep : -_kSpeedDragStep;
+      _stepPlaybackSpeed(faster ? 1 : -1);
+    }
+  }
+
+  void _stepPlaybackSpeed(int dir) {
+    final speeds = plPlayerController.speedList;
+    if (speeds.isEmpty) return;
+
+    final cur = plPlayerController.playbackSpeed;
+    var idx = speeds.indexOf(cur);
+    if (idx == -1) {
+      // 当前速度不在列表里（如临时倍速），就近找一档
+      idx = speeds.indexWhere((e) => e >= cur);
+      if (idx == -1) idx = speeds.length - 1;
+    }
+
+    final next = (idx + dir).clamp(0, speeds.length - 1);
+    if (next == idx) {
+      SmartDialog.showToast(dir > 0 ? '已是最高速度' : '已是最低速度');
+      return;
+    }
+    plPlayerController.setPlaybackSpeed(speeds[next]);
+    SmartDialog.showToast('${speeds[next]}X');
+  }
+
+  /// 双指双击：开关弹幕
+  final Set<int> _downPointers = <int>{};
+  DateTime? _lastTwoFingerTapAt;
+  static const Duration _kTwoFingerTapWindow = Duration(milliseconds: 300);
+
+  void _handleTwoFingerTap(PointerDownEvent event) {
+    _downPointers.add(event.pointer);
+    if (_downPointers.length != 2) return;
+
+    final now = DateTime.now();
+    final last = _lastTwoFingerTapAt;
+    if (last != null && now.difference(last) <= _kTwoFingerTapWindow) {
+      _lastTwoFingerTapAt = null;
+      _toggleDanmaku();
+    } else {
+      _lastTwoFingerTapAt = now;
+    }
+  }
+
+  void _toggleDanmaku() {
+    final rxBool = plPlayerController.enableShowDanmakuAdaptive;
+    final newVal = !rxBool.value;
+    rxBool.value = newVal;
+    if (!plPlayerController.tempPlayerConf) {
+      GStorage.setting.put(
+        plPlayerController.isLive
+            ? SettingBoxKey.enableShowLiveDanmaku
+            : SettingBoxKey.enableShowDanmaku,
+        newVal,
+      );
+    }
+    SmartDialog.showToast(newVal ? '弹幕已开' : '弹幕已关');
   }
 
   void onDoubleTapDownMobile(TapDownDetails details) {
@@ -1241,6 +1321,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
     final controlsUnlock = !plPlayerController.controlsLock.value;
     if (PlatformUtils.isMobile) {
+      _handleTwoFingerTap(event);
       _tapGestureRecognizer.addPointer(event);
       if (controlsUnlock) {
         if (!plPlayerController.isLive) {
@@ -1264,6 +1345,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   }
 
   void _onPointerUp(PointerUpEvent event) {
+    _downPointers.remove(event.pointer);
     final pending = _pendingFullScreenToggle;
     if (pending == null || event.buttons != 0) {
       return;
@@ -1282,6 +1364,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   void _onPointerCancel(PointerCancelEvent event) {
     _pendingFullScreenToggle = null;
+    _downPointers.remove(event.pointer);
   }
 
   void _onPointerPanZoomUpdate(PointerPanZoomUpdateEvent event) {
