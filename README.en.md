@@ -1,60 +1,46 @@
-<div align="center">
-    <img width="200" height="200" src="assets/images/logo/logo.png" alt="PiliPlus logo">
-    <h1>PiliPlus</h1>
-</div>
-
-<div align="center">
+> [!IMPORTANT]
+> **This repository is a fork of [bggRGjQaUbCoE/PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus), not the official one.**
+>
+> - Upstream: [bggRGjQaUbCoE/PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus)
+> - Fork owner: [yk2068](https://github.com/yk2068)
+> - License: **GPL-3.0**, same as upstream (see [LICENSE](LICENSE))
+>
+> **This fork is an AI-assisted custom build**: changes are generated and maintained with AI assistance (Claude/WorkBuddy), not released by the upstream author.
+> Customizations do not represent upstream's position. Please report issues here first; follow the upstream repository for its own progress.
 
 [中文](README.md) | English
 
-![GitHub repo size](https://img.shields.io/github/repo-size/bggRGjQaUbCoE/PiliPlus)
-![GitHub Repo stars](https://img.shields.io/github/stars/bggRGjQaUbCoE/PiliPlus)
-![GitHub all releases](https://img.shields.io/github/downloads/bggRGjQaUbCoE/PiliPlus/total)
+## Customizations in this fork
 
-</div>
+- **One-tap dislike**: a single menu tap submits immediately (no confirmation dialog); tapping again undoes it, and the item label switches to "撤销点踩"
+- **Disliked videos hidden everywhere**: once disliked, a video no longer appears in recommendations, hot/rank lists, or related videos
+- **Video tag filter**: long-press a tag on the detail page to add it to the filter list (matches partition name exactly, or title by substring); manage the list at Settings → Recommend → 视频标签过滤
+- **Two-finger double tap toggles danmaku**: two two-finger presses within 300ms switch danmaku on/off, and the choice is persisted
+- **Vertical swipe changes playback speed**: swipe up/down in the center area, one step per 40px; can be turned off in playback settings, which restores the original fullscreen-swipe gesture
 
-<div align="center">
-    <p>A third-party Bilibili client built with Flutter</p>
+## Build
 
-<img src="assets/screenshots/510shots_so.png" width="32%" alt="PiliPlus mobile screenshot" />
-<img src="assets/screenshots/174shots_so.png" width="32%" alt="PiliPlus mobile screenshot" />
-<img src="assets/screenshots/850shots_so.png" width="32%" alt="PiliPlus mobile screenshot" />
-<br/>
-<img src="assets/screenshots/main_screen.png" width="96%" alt="PiliPlus desktop screenshot" />
-<br/>
-</div>
+Requires Flutter `3.47.7` (see `pubspec.yaml`), Dart `>=3.13.0`, JDK 17.
 
-<br/>
+```bash
+flutter pub get
+flutter build apk --debug          # debug build, no signing needed
+flutter build apk --release        # requires android/key.properties
+```
 
-## Download
+Patch the Flutter SDK before building for Android (same as upstream CI):
 
-Download a build from [Releases](https://github.com/bggRGjQaUbCoE/PiliPlus/releases), or clone the repository and build it locally.
+```bash
+pwsh lib/scripts/patch.ps1 android
+```
+
+Every push triggers `.github/workflows/verify.yml` for cloud build verification (pub get → analyze → build apk).
 
 ## Disclaimer
 
-PiliPlus is a personal project developed for educational purposes, intended only for learning and testing. Please delete it within 24 hours of downloading.
-All APIs used were collected from the official website. This project does not provide any cracked content.
+PiliPlus is a personal project developed out of interest, for learning and testing only. Please delete it within 24 hours after downloading.
+All APIs are collected from the official site; no cracked content is provided.
 
-Credit to the original project: [guozhigq/pilipala](https://github.com/guozhigq/pilipala).
-Credit to the upstream project: [orz12/PiliPalaX](https://github.com/orz12/PiliPalaX).
-This repository makes more extensive changes. Thank you to the original authors for sharing their work as open source.
-
-Thank you for using PiliPlus.
-
-## Acknowledgements
-
-- [bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect)
-- [flutter_meedu_videoplayer](https://github.com/zezo357/flutter_meedu_videoplayer)
-- [media-kit](https://github.com/media-kit/media-kit)
-- [dio](https://pub.dev/packages/dio)
-- And others
-
-## Star History
-
-<a href="https://star-history.dera.page/#bggRGjQaUbCoE/PiliPlus&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
-   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=bggRGjQaUbCoE/PiliPlus&type=Date" />
- </picture>
-</a>
+Credits to the upstream authors: [bggRGjQaUbCoE/PiliPlus](https://github.com/bggRGjQaUbCoE/PiliPlus),
+[orz12/PiliPalaX](https://github.com/orz12/PiliPalaX),
+[guozhigq/pilipala](https://github.com/guozhigq/pilipala).
