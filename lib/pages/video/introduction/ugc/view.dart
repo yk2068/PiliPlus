@@ -39,7 +39,6 @@ import 'package:PiliPlus/utils/id_utils.dart';
 import 'package:PiliPlus/utils/num_utils.dart';
 import 'package:PiliPlus/utils/page_utils.dart';
 import 'package:PiliPlus/utils/platform_utils.dart';
-import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:PiliPlus/utils/request_utils.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -1028,11 +1027,7 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
                     parameters: {'keyword': tagName},
                   ),
                 },
-                // 长按标签立即加入过滤名单，推荐/热门/排行随即生效
-                onLongPress: (tagName) {
-                  Pref.addVideoTagFilter(tagName);
-                  SmartDialog.showToast('已添加标签过滤：$tagName');
-                },
+                onLongPress: Utils.copyText,
               ),
             )
             .toList(),

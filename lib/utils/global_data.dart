@@ -16,8 +16,6 @@ class GlobalData {
   /// 点踩过的视频（bvid），全场景屏蔽
   Set<String> dislikedBvids = Pref.dislikedBvids;
 
-  /// 视频标签过滤名单（长按标签添加）
-  Set<String> videoTagFilter = Pref.videoTagFilter;
 
   bool dynamicsWaterfallFlow = Pref.dynamicsWaterfallFlow;
 

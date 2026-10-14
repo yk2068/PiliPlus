@@ -250,7 +250,6 @@ abstract final class LocalCacheKey {
   static const String historyPause = 'historyPause',
       blackMids = 'blackMids',
       dislikedBvids = 'dislikedBvids',
-      videoTagFilter = 'videoTagFilter',
       danmakuFilterRules = 'danmakuFilterRules',
       mixinKey = 'mixinKey',
       timeStamp = 'timeStamp';

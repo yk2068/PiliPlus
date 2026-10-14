@@ -84,13 +84,6 @@ List<SettingsModel> get recommendSettings => [
     },
     banScope: 'App推荐、热门、分区',
   ),
-  NormalModel(
-    title: '视频标签过滤',
-    subtitle: '长按视频详情页的标签即可添加，命中的视频不再出现',
-    leading: const Icon(Icons.tag),
-    getSubtitle: () => '当前 ${Pref.videoTagFilter.length} 个标签',
-    onTap: (_, __) => Get.toNamed('/videoTagFilter'),
-  ),
   getVideoFilterSelectModel(
     title: '视频时长',
     suffix: 's',

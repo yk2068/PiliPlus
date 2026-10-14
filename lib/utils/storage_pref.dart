@@ -106,21 +106,6 @@ abstract final class Pref {
       bvid != null && GlobalData().dislikedBvids.contains(bvid);
 
   /// 视频标签过滤名单
-  static Set<String> get videoTagFilter =>
-      _localCache.get(LocalCacheKey.videoTagFilter, defaultValue: <String>{});
-
-  static set videoTagFilter(Set<String> videoTagFilterSet) =>
-      _localCache.put(LocalCacheKey.videoTagFilter, videoTagFilterSet);
-
-  static void addVideoTagFilter(String tag) => _localCache.put(
-    LocalCacheKey.videoTagFilter,
-    GlobalData().videoTagFilter..add(tag),
-  );
-
-  static void removeVideoTagFilter(String tag) => _localCache.put(
-    LocalCacheKey.videoTagFilter,
-    GlobalData().videoTagFilter..remove(tag),
-  );
 
   static MemberTabType get memberTab =>
       MemberTabType.values[_setting.get(

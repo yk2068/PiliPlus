@@ -92,12 +92,6 @@ abstract final class VideoHttp {
     if (RecommendFilter.filterDisliked(i['bvid']?.toString())) {
       return true;
     }
-    if (RecommendFilter.filterVideoTag(
-      tname: i['tname']?.toString(),
-      title: i['title']?.toString(),
-    )) {
-      return true;
-    }
     return false;
   }
 
@@ -128,12 +122,6 @@ abstract final class VideoHttp {
     }
     // 点踩过的视频不再出现在推荐
     if (RecommendFilter.filterDisliked(_appItemBvid(i))) {
-      return true;
-    }
-    if (RecommendFilter.filterVideoTag(
-      tname: i['args']?['tname']?.toString(),
-      title: i['title']?.toString(),
-    )) {
       return true;
     }
     return false;
@@ -218,12 +206,6 @@ abstract final class VideoHttp {
     }
     // 点踩过的视频不再出现在热门/排行
     if (RecommendFilter.filterDisliked(i['bvid']?.toString())) {
-      return false;
-    }
-    if (RecommendFilter.filterVideoTag(
-      tname: i['tname']?.toString(),
-      title: i['title']?.toString(),
-    )) {
       return false;
     }
     return true;

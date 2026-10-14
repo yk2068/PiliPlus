@@ -230,13 +230,15 @@ Future<void> _dislike(
       return;
     }
     final reason = tp.dislikeReasons?.firstOrNull;
-    if (reason == null) {
+    final feedback = tp.feedbacks?.firstOrNull;
+    if (reason == null && feedback == null) {
       SmartDialog.dismiss();
-      SmartDialog.showToast('未能获取 dislikeReasons');
+      SmartDialog.showToast('未能获取 dislikeReasons 或 feedbacks');
       return;
     }
     final res = await VideoHttp.feedDislike(
-      reasonId: reason.id,
+      reasonId: reason?.id,
+      feedbackId: feedback?.id,
       id: item.param!,
       goto: item.goto!,
     );
@@ -245,7 +247,7 @@ Future<void> _dislike(
       res.toast();
       return;
     }
-    SmartDialog.showToast(reason.toast ?? '已点踩');
+    SmartDialog.showToast(reason?.toast ?? feedback?.toast ?? '已点踩');
   } else {
     final res = await VideoHttp.dislikeVideo(bvid: bvid, type: true);
     SmartDialog.dismiss();
