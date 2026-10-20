@@ -1321,7 +1321,9 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
     final controlsUnlock = !plPlayerController.controlsLock.value;
     if (PlatformUtils.isMobile) {
-      _handleTwoFingerTap(event);
+      if (plPlayerController.enableTwoFingerTap) {
+        _handleTwoFingerTap(event);
+      }
       _tapGestureRecognizer.addPointer(event);
       if (controlsUnlock) {
         if (!plPlayerController.isLive) {

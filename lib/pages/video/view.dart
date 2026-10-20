@@ -274,6 +274,7 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
             exitFlag = false;
             plPlayerController!.play(repeat: true);
           case PlayRepeat.listOrder:
+          case PlayRepeat.partOrder:
           case PlayRepeat.listCycle:
           case PlayRepeat.autoPlayRelated:
             exitFlag = !introController.nextPlay();

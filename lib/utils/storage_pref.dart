@@ -468,7 +468,7 @@ abstract final class Pref {
       _setting.get(SettingBoxKey.cdnSpeedTest, defaultValue: true);
 
   static bool get autoUpdate =>
-      _setting.get(SettingBoxKey.autoUpdate, defaultValue: true);
+      _setting.get(SettingBoxKey.autoUpdate, defaultValue: false);
 
   static bool get horizontalPreview =>
       _setting.get(SettingBoxKey.horizontalPreview, defaultValue: false);
@@ -580,6 +580,27 @@ abstract final class Pref {
   /// 播放器中间区域上下滑动切换播放速度（开启时该区域不再用于全屏切换）
   static bool get enableSlideSpeed =>
       _setting.get(SettingBoxKey.enableSlideSpeed, defaultValue: true);
+
+  /// 双指双击开关弹幕
+  static bool get enableTwoFingerTap =>
+      _setting.get(SettingBoxKey.enableTwoFingerTap, defaultValue: true);
+
+  /// 自动一倍速播放（总开关）
+  static bool get autoMusicVideo1x =>
+      _setting.get(SettingBoxKey.autoMusicVideo1x, defaultValue: true);
+
+  /// 自动一倍速选中的主分区 tid 集合（默认仅音乐区）
+  static Set<int> get autoMusicVideo1xZones {
+    final list = _setting.get(SettingBoxKey.autoMusicVideo1xTids);
+    if (list is List && list.isNotEmpty) {
+      return list.map<int>((e) => e as int).toSet();
+    }
+    return {3};
+  }
+
+  /// 非自动一倍速的视频，手动调倍速后记忆为全局默认倍速
+  static bool get rememberSpeedChange =>
+      _setting.get(SettingBoxKey.rememberSpeedChange, defaultValue: true);
 
   static int get retryCount =>
       _setting.get(SettingBoxKey.retryCount, defaultValue: 2);
@@ -911,11 +932,15 @@ abstract final class Pref {
   static double get defaultToastOp =>
       _setting.get(SettingBoxKey.defaultToastOp, defaultValue: 1.0);
 
-  static PlayRepeat get playRepeat =>
-      PlayRepeat.values[_video.get(
-        VideoBoxKey.playRepeat,
-        defaultValue: PlayRepeat.pause.index,
-      )];
+  static PlayRepeat get playRepeat {
+    final index = _video.get(
+      VideoBoxKey.playRepeat,
+      defaultValue: PlayRepeat.pause.index,
+    );
+    return index >= 0 && index < PlayRepeat.values.length
+        ? PlayRepeat.values[index]
+        : PlayRepeat.pause;
+  }
 
   static int get cacheVideoFit =>
       _video.get(VideoBoxKey.cacheVideoFit, defaultValue: 1);
@@ -1092,4 +1117,10 @@ abstract final class Pref {
           ?.map<MineTabType>((index) => .values[index])
           .toSet() ??
       MineTabType.kDefault;
+
+  static Set<String> get videoSettingHiddenItems =>
+      (_setting.get(SettingBoxKey.videoSettingHiddenItems) as List?)
+          ?.cast<String>()
+          .toSet() ??
+      <String>{};
 }

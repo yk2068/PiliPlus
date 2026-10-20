@@ -466,8 +466,13 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     bool isStein = false,
   }) async {
     try {
-      final String bvid = episode.bvid ?? this.bvid;
-      final int aid = episode.aid ?? IdUtils.bv2av(bvid);
+      // 分P（Part）属于当前稿件：BV 号与 aid 一律沿用当前值，不随分P变化。
+      final String bvid = episode is Part
+          ? this.bvid
+          : (episode.bvid ?? this.bvid);
+      final int aid = episode is Part
+          ? videoDetailCtr.aid
+          : (episode.aid ?? IdUtils.bv2av(bvid));
       int? cid = episode.cid;
       Dimension? dimension;
       if (cid == null) {
@@ -484,7 +489,9 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       final String? cover = episode.cover;
 
       // 重新获取视频资源
-      if (videoDetailCtr.isPlayAll) {
+      // 同一稿件内切换分P（BV 号不变）始终原地切换，不新开播放页；
+      // 只有切到列表/合集中的其它稿件时，才需要按 mediaList 判断。
+      if (videoDetailCtr.isPlayAll && bvid != this.bvid) {
         if (videoDetailCtr.mediaList.indexWhere((item) => item.bvid == bvid) ==
             -1) {
           if (dimension == null && episode is EpisodeItem) {
@@ -571,6 +578,22 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     bool isPart = false;
 
     final videoDetail = this.videoDetail.value;
+    final PlayRepeat playRepeat = videoDetailCtr.plPlayerController.playRepeat;
+
+    // 分P连播：只在该稿件内部按页序切换 cid，BV 号保持不变；首个 P 之前即停止。
+    if (playRepeat == PlayRepeat.partOrder) {
+      final pages = videoDetail.pages;
+      if (pages == null || pages.length < 2) {
+        return false;
+      }
+      final index = pages.indexWhere((e) => e.cid == this.cid.value);
+      if (index <= 0) {
+        return false;
+      }
+      onChangeEpisode(pages[index - 1]);
+      return true;
+    }
+
     if (!skipPart && videoDetail.hasParts) {
       isPart = true;
       episodes.addAll(videoDetail.pages!);
@@ -596,7 +619,6 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
     );
 
     int prevIndex = currentIndex - 1;
-    final PlayRepeat playRepeat = videoDetailCtr.plPlayerController.playRepeat;
 
     // 列表循环
     if (prevIndex < 0) {
@@ -635,6 +657,22 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       final List<BaseEpisodeItem> episodes = <BaseEpisodeItem>[];
       bool isPart = false;
       final videoDetail = this.videoDetail.value;
+      final PlayRepeat playRepeat = videoDetailCtr.plPlayerController.playRepeat;
+
+      // 分P连播：只在该稿件内部按页序切换 cid，BV 号保持不变；
+      // 播完最后一个 P 即停止，不进入媒体列表或合集的下一个视频。
+      if (playRepeat == PlayRepeat.partOrder) {
+        final pages = videoDetail.pages;
+        if (pages == null || pages.length < 2) {
+          return false;
+        }
+        final index = pages.indexWhere((e) => e.cid == this.cid.value);
+        if (index == -1 || index + 1 >= pages.length) {
+          return false;
+        }
+        onChangeEpisode(pages[index + 1]);
+        return true;
+      }
 
       // part -> playall -> season
       if (!skipPart && videoDetail.hasParts) {
@@ -651,9 +689,6 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
           episodes.addAll(episodesList);
         }
       }
-
-      final PlayRepeat playRepeat =
-          videoDetailCtr.plPlayerController.playRepeat;
 
       if (episodes.isEmpty) {
         if (playRepeat == PlayRepeat.listCycle) {

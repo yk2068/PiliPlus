@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- 备份全部本地数据（shared_prefs / hive / 数据库等），
+         便于卸载重装后恢复本地设置 -->
+    <include domain="sharedpref" path="." />
+    <include domain="file" path="." />
+    <include domain="database" path="." />
+</full-backup-content>

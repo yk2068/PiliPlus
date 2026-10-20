@@ -137,4 +137,7 @@ abstract final class PiliAndroidHelper {
       jUrl?.release();
     }
   }
+
+  /// 重启应用
+  static void restartApp() => AndroidHelper.restartApp();
 }

@@ -111,6 +111,13 @@ List<SettingsModel> get playSettings => [
     setKey: SettingBoxKey.enableSlideSpeed,
     defaultVal: true,
   ),
+  const SwitchModel(
+    title: '双指双击开关弹幕',
+    subtitle: '双指同时双击播放器开关弹幕',
+    leading: Icon(Icons.touch_app_outlined),
+    setKey: SettingBoxKey.enableTwoFingerTap,
+    defaultVal: true,
+  ),
   if (PlatformUtils.isMobile)
     NormalModel(
       title: '播放器音量',

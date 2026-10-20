@@ -72,6 +72,18 @@ public final class AndroidHelper {
         getContext().startActivity(intent);
     }
 
+    public static void restartApp() {
+        Context context = getContext();
+        Intent intent = context.getPackageManager()
+                .getLaunchIntentForPackage(context.getPackageName());
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            context.startActivity(intent);
+        }
+        android.os.Process.killProcess(android.os.Process.myPid());
+        System.exit(0);
+    }
+
     public static void biliSendCommAntifraud(
             int action, long oid, int type, long rpId, long root, long parent, long ctime, @NonNull String commentText,
             String pictures, @NonNull String sourceId, long uid, @NonNull String cookie

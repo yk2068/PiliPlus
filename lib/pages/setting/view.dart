@@ -10,6 +10,7 @@ import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
 import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/accounts/account.dart';
+import 'package:PiliPlus/utils/android/android_helper.dart';
 import 'package:PiliPlus/utils/extension/size_ext.dart';
 import 'package:PiliPlus/utils/utils.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
@@ -212,8 +213,18 @@ class _SettingPageState extends State<SettingPage> {
           leading: _items.last.icon,
           title: Text(_items.last.type.title, style: titleStyle),
         ),
+        ListTile(
+          leading: const Icon(Icons.restart_alt_outlined),
+          onTap: _restartApp,
+          title: Text('重启应用', style: titleStyle),
+          subtitle: Text('立即重启以应用更改', style: subTitleStyle),
+        ),
       ],
     );
+  }
+
+  void _restartApp() {
+    PiliAndroidHelper.restartApp();
   }
 
   Future<void> _removeAccounts(Set<LoginAccount> accounts) async {

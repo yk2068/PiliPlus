@@ -279,6 +279,33 @@ extension type AndroidHelper._(jni$_.JObject _$this) implements jni$_.JObject {
     _back(_$$classRef.pointer, _id_back.pointer).check();
   }
 
+  static final _id_restartApp = _class.staticMethodId(
+    r'restartApp',
+    r'()V',
+  );
+
+  static final _restartApp =
+      jni$_.ProtectedJniExtensions.lookup<
+            jni$_.NativeFunction<
+              jni$_.JThrowablePtr Function(
+                jni$_.Pointer<jni$_.Void>,
+                jni$_.JMethodIDPtr,
+              )
+            >
+          >('globalEnv_CallStaticVoidMethod')
+          .asFunction<
+            jni$_.JThrowablePtr Function(
+              jni$_.Pointer<jni$_.Void>,
+              jni$_.JMethodIDPtr,
+            )
+          >();
+
+  /// from: `static public void restartApp()`
+  static void restartApp() {
+    final _$$classRef = _class.reference;
+    _restartApp(_$$classRef.pointer, _id_restartApp.pointer).check();
+  }
+
   static final _id_biliSendCommAntifraud = _class.staticMethodId(
     r'biliSendCommAntifraud',
     r'(IJIJJJJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;JLjava/lang/String;)V',

@@ -299,9 +299,9 @@ mixin HeaderMixin<T extends StatefulWidget> on State<T> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '不透明度 ${(plPlayerController.danmakuOpacity * 100).toStringAsFixed(1)}%',
+                          '不透明度 ${(plPlayerController.danmakuOpacity * 100).toStringAsFixed(0)}%',
                         ),
-                        resetBtn(theme, '100.0%', () => updateOpacity(1.0)),
+                        resetBtn(theme, '100%', () => updateOpacity(1.0)),
                       ],
                     ),
                     Padding(
@@ -310,9 +310,9 @@ mixin HeaderMixin<T extends StatefulWidget> on State<T> {
                         min: 0,
                         max: 1,
                         value: plPlayerController.danmakuOpacity.value,
-                        divisions: 100,
+                        divisions: 10,
                         label:
-                            '${(plPlayerController.danmakuOpacity * 100).toStringAsFixed(1)}%',
+                            '${(plPlayerController.danmakuOpacity * 100).toStringAsFixed(0)}%',
                         onChanged: updateOpacity,
                       ),
                     ),

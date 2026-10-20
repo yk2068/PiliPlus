@@ -16,6 +16,7 @@ class VideoDetailData {
   int? aid;
   int? videos;
   int? copyright;
+  int? tid;
   String? pic;
   String? title;
   int? pubdate;
@@ -67,6 +68,7 @@ class VideoDetailData {
     this.aid,
     this.videos,
     this.copyright,
+    this.tid,
     this.pic,
     this.title,
     this.pubdate,
@@ -94,6 +96,7 @@ class VideoDetailData {
         aid: json['aid'] as int?,
         videos: json['videos'] as int?,
         copyright: json['copyright'] as int?,
+        tid: json['tid'] as int?,
         pic: json['pic'] as String?,
         title: json['title'] as String?,
         pubdate: json['pubdate'] as int?,

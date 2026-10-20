@@ -453,6 +453,7 @@ class AudioController extends GetxController
               case PlayRepeat.pause:
                 break;
               case PlayRepeat.listOrder:
+              case PlayRepeat.partOrder:
                 playNext(nextPart: true);
                 break;
               case PlayRepeat.singleCycle:

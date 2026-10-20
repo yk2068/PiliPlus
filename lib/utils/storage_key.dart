@@ -125,6 +125,10 @@ abstract final class SettingBoxKey {
       enableSlideVolumeBrightness = 'enableSlideVolumeBrightness',
       enableSlideFS = 'enableSlideFS',
       enableSlideSpeed = 'enableSlideSpeed',
+      enableTwoFingerTap = 'enableTwoFingerTap',
+      autoMusicVideo1x = 'autoMusicVideo1x',
+      autoMusicVideo1xTids = 'autoMusicVideo1xTids',
+      rememberSpeedChange = 'rememberSpeedChange',
       retryCount = 'retryCount',
       retryDelay = 'retryDelay',
       liveQuality = 'liveQuality',
@@ -160,6 +164,7 @@ abstract final class SettingBoxKey {
       enableDocProvider = 'enableDocProvider',
       enableEmoteTooltip = 'enableEmoteTooltip',
       mineTabs = 'mineTabs',
+      videoSettingHiddenItems = 'videoSettingHiddenItems',
       buvid = 'buvid';
 
   static const String minimizeOnExit = 'minimizeOnExit',

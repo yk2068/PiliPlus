@@ -126,6 +126,8 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
 
   final RxBool isFullScreen = false.obs;
   bool isLive = false;
+  // 音乐视频（音乐区）自动一倍速播放
+  bool isMusicVideo = false;
 
   bool _isVertical = false;
 
@@ -430,6 +432,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   late final enableSlideVolumeBrightness = Pref.enableSlideVolumeBrightness;
   late final enableSlideFS = Pref.enableSlideFS;
   late final enableSlideSpeed = Pref.enableSlideSpeed;
+  late final enableTwoFingerTap = Pref.enableTwoFingerTap;
   late final enableDragSubtitle = Pref.enableDragSubtitle;
   late final fastForBackwardDuration = Duration(
     seconds: Pref.fastForBackwardDuration,
@@ -686,6 +689,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
   Future<void> setDataSource(
     DataSource dataSource, {
     bool isLive = false,
+    bool isMusicVideo = false,
     bool autoplay = true,
     // 初始化播放位置
     Duration? seekTo,
@@ -711,6 +715,7 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     try {
       _processing = true;
       this.isLive = isLive;
+      this.isMusicVideo = isMusicVideo;
       _videoType = videoType ?? VideoType.ugc;
       this.width = width;
       this.height = height;
@@ -953,10 +958,10 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     if (_instance == null) return;
     // 设置倍速
     if (_videoPlayerController != null) {
-      final speed = isLive ? 1.0 : playbackSpeed;
-      if (_videoPlayerController!.state.rate != speed) {
-        await setPlaybackSpeed(speed);
-      }
+      final speed =
+          isLive || (isMusicVideo && Pref.autoMusicVideo1x) ? 1.0 : playbackSpeed;
+      // 无条件调用，确保 UI 显示的倍速与实际一致（setPlaybackSpeed 内部会先同步 _playbackSpeed）
+      await setPlaybackSpeed(speed, fromUser: false);
     }
     _initVideoFit();
 
@@ -1203,14 +1208,26 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
     }
   }
 
+  /// 当前视频是否命中「自动一倍速」（此类视频不记忆倍速变化）
+  bool get _isAuto1xVideo => isMusicVideo && Pref.autoMusicVideo1x;
+
   /// 设置倍速
-  Future<void> setPlaybackSpeed(double speed) async {
+  /// [fromUser] 是否为用户手动调整（起播初始化与长按倍速为 false，不记忆）
+  Future<void> setPlaybackSpeed(double speed, {bool fromUser = true}) async {
     lastPlaybackSpeed = playbackSpeed;
+
+    // 先同步 UI 显示的实际倍速，再决定是否需要真正设置底层 rate，
+    // 避免 rate 相等时提前 return 导致显示与实际倍速不一致
+    if (!isLive) _playbackSpeed.value = speed;
+
+    // 记忆倍速变化：仅用户手动调整、非直播、非自动一倍速的视频
+    if (fromUser && !isLive && !_isAuto1xVideo && Pref.rememberSpeedChange) {
+      video.put(VideoBoxKey.playSpeedDefault, speed);
+    }
 
     if (speed == _videoPlayerController?.state.rate) return;
 
     await _videoPlayerController?.setRate(speed);
-    if (!isLive) _playbackSpeed.value = speed;
     _updatePlaybackState();
     if (danmakuController != null) {
       try {
@@ -1367,12 +1384,13 @@ class PlPlayerController with BlockConfigMixin, AudioNormalizationMixin {
         HapticFeedback.lightImpact();
         await setPlaybackSpeed(
           enableAutoLongPressSpeed ? playbackSpeed * 2 : longPressSpeed,
+          fromUser: false,
         );
       }
     } else {
       // if (kDebugMode) debugPrint('$playbackSpeed');
       longPressStatus.value = val;
-      await setPlaybackSpeed(lastPlaybackSpeed);
+      await setPlaybackSpeed(lastPlaybackSpeed, fromUser: false);
     }
   }
 

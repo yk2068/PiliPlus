@@ -25,6 +25,7 @@ import 'package:PiliPlus/models/common/video/source_type.dart';
 import 'package:PiliPlus/models/common/video/video_decode_type.dart';
 import 'package:PiliPlus/models/common/video/video_quality.dart';
 import 'package:PiliPlus/models/common/video/video_type.dart';
+import 'package:PiliPlus/models/common/video_zone.dart';
 import 'package:PiliPlus/models/video/play/url.dart';
 import 'package:PiliPlus/models_new/download/bili_download_entry_info.dart';
 import 'package:PiliPlus/models_new/media_list/media_list.dart';
@@ -194,6 +195,11 @@ class VideoDetailController extends GetxController
         vsync: this,
         duration: const Duration(milliseconds: 200),
       )..addListener(_animListener));
+
+  bool _isMusicVideoTid(int? tid) {
+    final zone = zoneOfTid(tid);
+    return zone != null && Pref.autoMusicVideo1xZones.contains(zone);
+  }
 
   void refreshPage() {
     scrollKey.currentState?.refresh();
@@ -748,6 +754,7 @@ class VideoDetailController extends GetxController
           ? null
           : Duration(milliseconds: data.timeLength!),
       isVertical: isVertical.value,
+      isMusicVideo: isUgc && _isMusicVideoTid(ugcIntroCtr.videoDetail.value.tid),
       aid: aid,
       bvid: bvid,
       cid: cid.value,

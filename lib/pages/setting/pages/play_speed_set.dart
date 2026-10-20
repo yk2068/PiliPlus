@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:PiliPlus/common/widgets/flutter/list_tile.dart';
 import 'package:PiliPlus/common/widgets/scaffold/simple_scaffold.dart';
 import 'package:PiliPlus/common/widgets/view_safe_area.dart';
+import 'package:PiliPlus/models/common/video_zone.dart';
 import 'package:PiliPlus/pages/setting/widgets/switch_item.dart';
 import 'package:PiliPlus/utils/extension/context_ext.dart';
 import 'package:PiliPlus/utils/filtering_text.dart';
@@ -179,6 +180,22 @@ class _PlaySpeedPageState extends State<PlaySpeedPage> {
     setState(() {});
   }
 
+  Future<void> _showZoneSelectDialog() async {
+    final res = await showDialog<Set<int>>(
+      context: context,
+      builder: (context) => _ZoneSelectDialog(
+        selected: Pref.autoMusicVideo1xZones,
+      ),
+    );
+    if (res != null) {
+      await GStorage.setting.put(
+        SettingBoxKey.autoMusicVideo1xTids,
+        res.toList(),
+      );
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -232,6 +249,33 @@ class _PlaySpeedPageState extends State<PlaySpeedPage> {
                 title: const Text('默认长按倍速'),
                 subtitle: Text(longPressSpeedDefault.toString()),
               ),
+            SetSwitchItem(
+              title: '自动一倍速',
+              subtitle: '勾选的分区视频自动以一倍速起播',
+              setKey: SettingBoxKey.autoMusicVideo1x,
+              defaultVal: Pref.autoMusicVideo1x,
+            ),
+            ListTile(
+              leading: const Icon(Icons.category_outlined),
+              title: const Text('自动一倍速分区'),
+              subtitle: Text(
+                () {
+                  final zones = Pref.autoMusicVideo1xZones;
+                  final names = videoZones
+                      .where((z) => zones.contains(z.tid))
+                      .map((z) => z.name)
+                      .join('、');
+                  return '已选: ${names.isEmpty ? '无' : names}';
+                }(),
+              ),
+              onTap: _showZoneSelectDialog,
+            ),
+            SetSwitchItem(
+              title: '记忆倍速变化',
+              subtitle: '手动调倍速后记为默认倍速；自动一倍速的视频不记忆',
+              setKey: SettingBoxKey.rememberSpeedChange,
+              defaultVal: Pref.rememberSpeedChange,
+            ),
             Padding(
               padding: const EdgeInsets.only(
                 left: 14,
@@ -276,6 +320,64 @@ class _PlaySpeedPageState extends State<PlaySpeedPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ZoneSelectDialog extends StatefulWidget {
+  final Set<int> selected;
+
+  const _ZoneSelectDialog({required this.selected});
+
+  @override
+  State<_ZoneSelectDialog> createState() => _ZoneSelectDialogState();
+}
+
+class _ZoneSelectDialogState extends State<_ZoneSelectDialog> {
+  late final Set<int> _selected = {...widget.selected};
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AlertDialog(
+      clipBehavior: Clip.hardEdge,
+      title: const Text('自动一倍速分区'),
+      contentPadding: const EdgeInsets.only(top: 12),
+      content: Material(
+        type: MaterialType.transparency,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: videoZones.map((zone) {
+              return CheckboxListTile(
+                dense: true,
+                value: _selected.contains(zone.tid),
+                title: Text(zone.name, style: theme.textTheme.titleMedium),
+                onChanged: (checked) {
+                  setState(() {
+                    if (checked == true) {
+                      _selected.add(zone.tid);
+                    } else {
+                      _selected.remove(zone.tid);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+      actionsPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+      actions: [
+        TextButton(
+          onPressed: Get.back,
+          child: Text('取消', style: TextStyle(color: theme.colorScheme.outline)),
+        ),
+        TextButton(
+          onPressed: () => Get.back(result: _selected),
+          child: const Text('确定'),
+        ),
+      ],
     );
   }
 }
