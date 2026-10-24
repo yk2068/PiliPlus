@@ -1177,13 +1177,34 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
     SmartDialog.showToast('${speeds[next]}X');
   }
 
-  /// 双指双击：开关弹幕
+  /// 按下中的指针（手指），用于识别双指手势
   final Set<int> _downPointers = <int>{};
+
+  /// 这一轮触摸中是否出现过多指同时按下
+  bool _groupHadMultiTouch = false;
+
+  /// 多指参与过的触摸序列结束后，这段时间内忽略双击回调。
+  /// 双击识别器只看按下的时间与位置，两根手指先后按下会被它拼成一次双击，
+  /// 于是双指双击会顺带触发播放/暂停。
+  DateTime? _doubleTapIgnoredUntil;
+  static const Duration _kMultiTouchGuard = Duration(milliseconds: 400);
+
+  bool get _isDoubleTapIgnored {
+    final until = _doubleTapIgnoredUntil;
+    return until != null && DateTime.now().isBefore(until);
+  }
+
+  void _releasePointer(int pointer) {
+    if (!_downPointers.remove(pointer) || !_groupHadMultiTouch) return;
+    _doubleTapIgnoredUntil = DateTime.now().add(_kMultiTouchGuard);
+    if (_downPointers.isEmpty) _groupHadMultiTouch = false;
+  }
+
   DateTime? _lastTwoFingerTapAt;
   static const Duration _kTwoFingerTapWindow = Duration(milliseconds: 300);
 
+  /// 双指双击：开关弹幕
   void _handleTwoFingerTap(PointerDownEvent event) {
-    _downPointers.add(event.pointer);
     if (_downPointers.length != 2) return;
 
     final now = DateTime.now();
@@ -1267,6 +1288,8 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   }
 
   void _onDoubleTapDown(TapDownDetails details) {
+    // 双指及以上或多指参与过的触摸不算双击，避免双指双击触发播放/暂停
+    if (_isDoubleTapIgnored || _downPointers.length > 1) return;
     switch (details.kind) {
       case ui.PointerDeviceKind.mouse when PlatformUtils.isDesktop:
         plPlayerController.triggerFullScreen(status: !isFullScreen);
@@ -1321,6 +1344,11 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
     final controlsUnlock = !plPlayerController.controlsLock.value;
     if (PlatformUtils.isMobile) {
+      _downPointers.add(event.pointer);
+      if (_downPointers.length > 1) {
+        _groupHadMultiTouch = true;
+        _doubleTapIgnoredUntil = DateTime.now().add(_kMultiTouchGuard);
+      }
       if (plPlayerController.enableTwoFingerTap) {
         _handleTwoFingerTap(event);
       }
@@ -1347,7 +1375,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
   }
 
   void _onPointerUp(PointerUpEvent event) {
-    _downPointers.remove(event.pointer);
+    _releasePointer(event.pointer);
     final pending = _pendingFullScreenToggle;
     if (pending == null || event.buttons != 0) {
       return;
@@ -1366,7 +1394,7 @@ class _PLVideoPlayerState extends State<PLVideoPlayer>
 
   void _onPointerCancel(PointerCancelEvent event) {
     _pendingFullScreenToggle = null;
-    _downPointers.remove(event.pointer);
+    _releasePointer(event.pointer);
   }
 
   void _onPointerPanZoomUpdate(PointerPanZoomUpdateEvent event) {
