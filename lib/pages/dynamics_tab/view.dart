@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
@@ -96,6 +97,8 @@ class _DynamicsTabPageState extends State<DynamicsTabPage>
     const padding = 10.0;
     final tileWidth =
         (MediaQuery.sizeOf(context).width - padding * 2) / columns;
+    // 标题两行 + UP主发布时间 + 播放弹幕一行，按系统字号缩放留够高度
+    final infoHeight = 84.0 * MediaQuery.textScalerOf(context).scale(1);
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(padding, 8, padding, 100),
       sliver: SliverGrid.builder(
@@ -103,11 +106,10 @@ class _DynamicsTabPageState extends State<DynamicsTabPage>
           crossAxisCount: columns,
           mainAxisSpacing: 10,
           crossAxisSpacing: 8,
-          // 横向卡片的高度取封面高度，文字放大时再兜一个最小高度；
-          // 竖向卡片还要留出两行标题的位置
+          // 横向卡片的高度就是封面的高度（封面占宽 45%），文字放大时再按文字撑高
           mainAxisExtent: horizontal
-              ? (tileWidth * 0.4 / Style.aspectRatio).clamp(92.0, 200.0)
-              : tileWidth / Style.aspectRatio + 40,
+              ? max(tileWidth * 0.45 / Style.aspectRatio, infoHeight)
+              : tileWidth / Style.aspectRatio + infoHeight,
         ),
         itemCount: list.length,
         itemBuilder: (context, index) {

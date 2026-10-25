@@ -24,6 +24,12 @@ extension DynamicItemExt on DynamicItemModel {
 
   bool get isVideoDynamic => _videoTypes.contains(type) && videoArchive != null;
 
+  /// 能当普通稿件处理的 bvid。番剧、课程那一支给的是 epid，拿去查稿件接口会失败。
+  String? get videoBvid {
+    final bvid = videoArchive?.bvid;
+    return bvid != null && bvid.startsWith('BV') ? bvid : null;
+  }
+
   /// 充电专属投稿：稿件卡片右上角的「充电专属」徽标。
   bool get isChargingVideo {
     final text = videoArchive?.badge?.text;
