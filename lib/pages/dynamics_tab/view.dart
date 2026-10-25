@@ -1,11 +1,13 @@
 import 'dart:async';
 
+import 'package:PiliPlus/common/style.dart';
 import 'package:PiliPlus/common/widgets/flutter/refresh_indicator.dart';
 import 'package:PiliPlus/common/widgets/loading_widget/http_error.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
+import 'package:PiliPlus/pages/dynamics/widgets/compact_video_card.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/dynamic_panel.dart';
 import 'package:PiliPlus/pages/dynamics_tab/controller.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
@@ -54,14 +56,69 @@ class _DynamicsTabPageState extends State<DynamicsTabPage>
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         controller: controller.scrollController,
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.only(bottom: 100),
-            sliver: buildPage(
-              Obx(() => _buildBody(controller.loadingState.value)),
-            ),
-          ),
-        ],
+        slivers: GlobalData().dynCompact
+            ? [Obx(() => _buildCompactBody(controller.loadingState.value))]
+            : [
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  sliver: buildPage(
+                    Obx(() => _buildBody(controller.loadingState.value)),
+                  ),
+                ),
+              ],
+      ),
+    );
+  }
+
+  /// 精简模式：纯视频格子，不带卡片外框与底部留白之外的装饰
+  Widget _buildCompactBody(LoadingState<List<DynamicItemModel>?> loadingState) {
+    return switch (loadingState) {
+      Loading() => dynSkeleton,
+      Success(:final response) =>
+        response != null && response.isNotEmpty
+            ? _compactGrid(response)
+            : HttpError(onReload: controller.onReload),
+      Error(:final errMsg) => HttpError(
+        errMsg: errMsg,
+        onReload: controller.onReload,
+      ),
+    };
+  }
+
+  Widget _compactGrid(List<DynamicItemModel> source) {
+    // 被屏蔽的条目只在数据里留了不可见标记，格子里不该留空洞
+    final list = source.where((e) => e.visible != false).toList();
+    if (list.isEmpty) {
+      return HttpError(onReload: controller.onReload);
+    }
+    final columns = GlobalData().dynCompactColumn.count;
+    final horizontal = columns == 1;
+    const padding = 10.0;
+    final tileWidth =
+        (MediaQuery.sizeOf(context).width - padding * 2) / columns;
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(padding, 8, padding, 100),
+      sliver: SliverGrid.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 8,
+          // 横向卡片的高度取封面高度，文字放大时再兜一个最小高度；
+          // 竖向卡片还要留出两行标题的位置
+          mainAxisExtent: horizontal
+              ? (tileWidth * 0.4 / Style.aspectRatio).clamp(92.0, 200.0)
+              : tileWidth / Style.aspectRatio + 40,
+        ),
+        itemCount: list.length,
+        itemBuilder: (context, index) {
+          if (index == list.length - 1) {
+            controller.onLoadMore();
+          }
+          return CompactVideoCard(
+            item: list[index],
+            horizontal: horizontal,
+          );
+        },
       ),
     );
   }

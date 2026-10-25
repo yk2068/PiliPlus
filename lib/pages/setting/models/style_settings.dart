@@ -11,6 +11,7 @@ import 'package:PiliPlus/common/widgets/scroll_physics.dart'
 import 'package:PiliPlus/common/widgets/stateful_builder.dart';
 import 'package:PiliPlus/models/common/bar_hide_type.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
+import 'package:PiliPlus/models/common/dynamic/dyn_compact_column.dart';
 import 'package:PiliPlus/models/common/dynamic/up_panel_position.dart';
 import 'package:PiliPlus/models/common/home_tab_type.dart';
 import 'package:PiliPlus/models/common/mine_tab_type.dart';
@@ -146,6 +147,33 @@ List<SettingsModel> get styleSettings => [
     setKey: SettingBoxKey.dynamicsWaterfallFlow,
     defaultVal: Pref.horizontalScreen,
     needReboot: true,
+  ),
+  const SwitchModel(
+    title: '动态页精简模式',
+    subtitle: '隐藏顶栏与UP主侧栏，只保留视频，点开即播',
+    leading: Icon(Icons.grid_view_outlined),
+    setKey: SettingBoxKey.dynCompact,
+    defaultVal: false,
+    needReboot: true,
+  ),
+  PopupModel(
+    title: '精简模式每行数量',
+    leading: const Icon(Icons.view_column_outlined),
+    value: () => Pref.dynCompactColumn,
+    items: DynCompactColumn.values,
+    onSelected: (value, setState) {
+      GStorage.setting
+          .put(SettingBoxKey.dynCompactColumn, value.index)
+          .whenComplete(setState);
+      SmartDialog.showToast('重启生效');
+    },
+  ),
+  const SwitchModel(
+    title: '屏蔽充电视频',
+    subtitle: '动态流里隐藏带「充电专属」标记的投稿',
+    leading: Icon(Icons.bolt_outlined),
+    setKey: SettingBoxKey.blockChargingVideo,
+    defaultVal: false,
   ),
   PopupModel(
     title: '动态页UP主显示位置',

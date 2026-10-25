@@ -6,6 +6,7 @@ import 'package:PiliPlus/common/widgets/pair.dart';
 import 'package:PiliPlus/http/constants.dart';
 import 'package:PiliPlus/models/common/bar_hide_type.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamic_badge_mode.dart';
+import 'package:PiliPlus/models/common/dynamic/dyn_compact_column.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/common/dynamic/up_panel_position.dart';
 import 'package:PiliPlus/models/common/follow_order_type.dart';
@@ -736,6 +737,19 @@ abstract final class Pref {
     SettingBoxKey.dynamicsWaterfallFlow,
     defaultValue: horizontalScreen,
   );
+
+  static bool get dynCompact =>
+      _setting.get(SettingBoxKey.dynCompact, defaultValue: false);
+
+  static DynCompactColumn get dynCompactColumn => DynCompactColumn.fromIndex(
+    _setting.get(
+      SettingBoxKey.dynCompactColumn,
+      defaultValue: DynCompactColumn.two.index,
+    ),
+  );
+
+  static bool get blockChargingVideo =>
+      _setting.get(SettingBoxKey.blockChargingVideo, defaultValue: false);
 
   static bool get hideTopBar => _setting.get(
     SettingBoxKey.hideTopBar,

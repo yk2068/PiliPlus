@@ -1,3 +1,4 @@
+import 'package:PiliPlus/models/common/dynamic/dyn_compact_column.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 
 class GlobalData {
@@ -16,8 +17,13 @@ class GlobalData {
   /// 点踩过的视频（bvid），全场景屏蔽
   Set<String> dislikedBvids = Pref.dislikedBvids;
 
-
   bool dynamicsWaterfallFlow = Pref.dynamicsWaterfallFlow;
+
+  /// 动态页精简：去掉顶栏与UP主侧栏，只留视频卡片
+  bool dynCompact = Pref.dynCompact;
+
+  /// 精简模式下每行的卡片数量
+  DynCompactColumn dynCompactColumn = Pref.dynCompactColumn;
 
   bool showMedal = Pref.showMedal;
 

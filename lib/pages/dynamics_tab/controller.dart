@@ -7,7 +7,10 @@ import 'package:PiliPlus/pages/common/common_list_controller.dart';
 import 'package:PiliPlus/pages/dynamics/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/services/account_service.dart';
+import 'package:PiliPlus/utils/extension/dynamic_ext.dart';
 import 'package:PiliPlus/utils/extension/scroll_controller_ext.dart';
+import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 
@@ -40,7 +43,20 @@ class DynamicsTabController
   @override
   List<DynamicItemModel>? getDataList(DynamicsDataModel response) {
     offset = response.offset;
-    return response.items;
+    final items = response.items;
+    if (items == null) return null;
+    if (!GlobalData().dynCompact && !Pref.blockChargingVideo) {
+      return items;
+    }
+    // 只打不可见标记，不从列表里删：删了会让「本页全是充电视频」变成空页，
+    // 而空页会把翻页直接判成到底。
+    for (final item in items) {
+      if ((Pref.blockChargingVideo && item.isChargingVideo) ||
+          (GlobalData().dynCompact && !item.isVideoDynamic)) {
+        item.visible = false;
+      }
+    }
+    return items;
   }
 
   @override
@@ -79,16 +95,25 @@ class DynamicsTabController
   }
 
   void onUnfold(DynamicItemModel item, int index) {
-    try {
-      final list = loadingState.value.data!;
-      final ids = item.modules.moduleFold!.ids!;
-      final flag = index + ids.length + 1;
-      for (int i = index + 1; i < flag; i++) {
+    final list = loadingState.value.data;
+    final ids = item.modules.moduleFold?.ids;
+    if (list == null || ids == null) return;
+    // 按 id 展开：列表可能被精简模式/充电屏蔽过滤过，位置会错位
+    var matched = false;
+    for (final e in list) {
+      if (ids.contains('${e.idStr}')) {
+        e.visible = true;
+        matched = true;
+      }
+    }
+    if (!matched) {
+      final end = index + 1 + ids.length;
+      for (int i = index + 1; i < end && i < list.length; i++) {
         list[i].visible = true;
       }
-      item.modules.moduleFold = null;
-      loadingState.refresh();
-    } catch (_) {}
+    }
+    item.modules.moduleFold = null;
+    loadingState.refresh();
   }
 
   @override

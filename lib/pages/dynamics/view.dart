@@ -10,6 +10,7 @@ import 'package:PiliPlus/pages/dynamics_create/view.dart';
 import 'package:PiliPlus/pages/dynamics_tab/view.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
+import 'package:PiliPlus/utils/global_data.dart';
 import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart' hide DraggableScrollableSheet;
 
@@ -122,6 +123,19 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
 
     Widget? leading;
     Widget actions;
+
+    // 精简模式：顶栏和UP主侧栏都不要，整页只留投稿视频（服务端已按类型过滤，
+    // 控制器里再兜一层，把没挂在稿件上的条目剔掉）。
+    if (GlobalData().dynCompact) {
+      return Scaffold(
+        primary: false,
+        resizeToAvoidBottomInset: false,
+        backgroundColor: Colors.transparent,
+        body: onBuild(
+          const DynamicsTabPage(dynamicsType: DynamicsTabType.video),
+        ),
+      );
+    }
 
     Widget child = tabBarView(
       controller: _dynamicsController.tabController,
