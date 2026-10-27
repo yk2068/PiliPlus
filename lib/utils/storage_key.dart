@@ -235,6 +235,7 @@ abstract final class SettingBoxKey {
       dynCompact = 'dynCompact',
       dynCompactColumn = 'dynCompactColumn',
       blockChargingVideo = 'blockChargingVideo',
+      recentSettings = 'recentSettings',
       upPanelPosition = 'upPanelPosition',
       dynamicsShowAllFollowedUp = 'dynamicsShowAllFollowedUp',
       useSideBar = 'useSideBar',

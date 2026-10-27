@@ -6,6 +6,7 @@ import 'package:PiliPlus/models/common/setting_type.dart';
 import 'package:PiliPlus/pages/about/view.dart';
 import 'package:PiliPlus/pages/login/controller.dart';
 import 'package:PiliPlus/pages/setting/common_setting.dart';
+import 'package:PiliPlus/pages/setting/pages/recent_setting.dart';
 import 'package:PiliPlus/pages/setting/widgets/multi_select_dialog.dart';
 import 'package:PiliPlus/pages/webdav/view.dart';
 import 'package:PiliPlus/utils/accounts.dart';
@@ -180,6 +181,12 @@ class _SettingPageState extends State<SettingPage> {
       padding: EdgeInsets.only(bottom: padding.bottom + 100),
       children: [
         _buildSearchItem(theme),
+        ListTile(
+          onTap: () => Get.to(() => const RecentSettingPage()),
+          leading: const Icon(Icons.history),
+          title: Text('常用设置', style: titleStyle),
+          subtitle: Text('最近用过的设置项', style: subTitleStyle),
+        ),
         ..._items
             .take(_items.length - 1)
             .map(

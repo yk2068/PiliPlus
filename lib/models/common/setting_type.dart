@@ -20,6 +20,9 @@ enum SettingType {
   final String title;
   const SettingType(this.title);
 
+  // WebDAV 与关于不是设置项列表，取 settings 会抛。
+  bool get hasSettings => this != .webdavSetting && this != .about;
+
   List<SettingsModel> get settings => switch (this) {
     .privacySetting => privacySettings,
     .recommendSetting => recommendSettings,

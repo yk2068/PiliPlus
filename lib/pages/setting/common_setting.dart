@@ -1,6 +1,7 @@
 import 'package:PiliPlus/common/widgets/scaffold/simple_scaffold.dart';
 import 'package:PiliPlus/models/common/setting_type.dart';
 import 'package:PiliPlus/pages/setting/models/model.dart';
+import 'package:PiliPlus/pages/setting/pages/recent_setting.dart';
 import 'package:material_ui/material_ui.dart';
 
 class CommonSetting extends StatefulWidget {
@@ -58,7 +59,11 @@ class _CommonSettingState extends State<CommonSetting> {
           bottom: padding.bottom + 100,
         ),
         itemCount: settings.length,
-        itemBuilder: (context, index) => settings[index].widget,
+        itemBuilder: (context, index) => RecentSettingTracker(
+          type: widget.settingType,
+          index: index,
+          child: settings[index].widget,
+        ),
       ),
     );
   }
