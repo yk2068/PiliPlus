@@ -8,6 +8,7 @@ import 'package:PiliPlus/pages/dynamics/controller.dart';
 import 'package:PiliPlus/pages/dynamics/widgets/up_panel.dart';
 import 'package:PiliPlus/pages/dynamics_create/view.dart';
 import 'package:PiliPlus/pages/dynamics_tab/view.dart';
+import 'package:PiliPlus/pages/home/controller.dart';
 import 'package:PiliPlus/pages/main/controller.dart';
 import 'package:PiliPlus/utils/extension/get_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
@@ -97,6 +98,84 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
       _mainController.navigationBars[0] != .dynamics &&
       _mainController.selectedIndex.value == 0;
 
+  /// 精简模式把顶栏去掉了，这里补一条：搜索框 + 常用的发布、设置入口。
+  Widget _compactBar(ColorScheme colorScheme) {
+    final home = Get.isRegistered<HomeController>()
+        ? Get.find<HomeController>()
+        : null;
+    const radius = BorderRadius.all(Radius.circular(25));
+    return SizedBox(
+      height: 52,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 4, 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: Material(
+                borderRadius: radius,
+                color: colorScheme.onSecondaryContainer.withValues(alpha: 0.05),
+                child: InkWell(
+                  borderRadius: radius,
+                  onTap: () => Get.toNamed(
+                    '/search',
+                    parameters: home != null && home.enableSearchWord
+                        ? {'hintText': home.defaultSearch.value}
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 14),
+                      Icon(
+                        Icons.search_outlined,
+                        size: 20,
+                        color: colorScheme.onSecondaryContainer,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: home == null
+                            ? Text(
+                                '搜索',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: colorScheme.outline,
+                                ),
+                              )
+                            : Obx(
+                                () => Text(
+                                  home.defaultSearch.value,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colorScheme.outline,
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: '发布动态',
+              onPressed: () => CreateDynPanel.onCreateDyn(context),
+              icon: const Icon(Icons.add, size: 22),
+              color: colorScheme.onSurface,
+            ),
+            IconButton(
+              tooltip: '设置',
+              onPressed: () => Get.toNamed('/setting'),
+              icon: const Icon(Icons.settings_outlined, size: 20),
+              color: colorScheme.onSurface,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   bool onNotificationType1(UserScrollNotification notification) {
     if (checkPage) {
@@ -125,14 +204,21 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
     Widget actions;
 
     // 精简模式：顶栏和UP主侧栏都不要，整页只留投稿视频（服务端已按类型过滤，
-    // 控制器里再兜一层，把没挂在稿件上的条目剔掉）。
+    // 控制器里再兜一层，把没挂在稿件上的条目剔掉）。搜索栏和常用入口单独补一条。
     if (GlobalData().dynCompact) {
       return Scaffold(
         primary: false,
         resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
-        body: onBuild(
-          const DynamicsTabPage(dynamicsType: DynamicsTabType.video),
+        body: Column(
+          children: [
+            _compactBar(colorScheme),
+            Expanded(
+              child: onBuild(
+                const DynamicsTabPage(dynamicsType: DynamicsTabType.video),
+              ),
+            ),
+          ],
         ),
       );
     }
