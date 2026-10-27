@@ -27,11 +27,16 @@ class DynamicsPage extends StatefulWidget {
 class _DynamicsPageState extends CommonPageState<DynamicsPage>
     with AutomaticKeepAliveClientMixin {
   final _dynamicsController = Get.putOrFind(DynamicsController.new);
+  final _homeController = Get.putOrFind(HomeController.new);
   UpPanelPosition get upPanelPosition => _dynamicsController.upPanelPosition;
   late final MainController _mainController = Get.find<MainController>();
 
   @override
   bool get wantKeepAlive => true;
+
+  // 顶栏高度随滚动收缩时补偿列表偏移，和首页一致，否则列表会跟着跳动。
+  @override
+  bool get needsCorrection => _homeController.hideTopBar;
 
   Widget _createDynamicBtn(ColorScheme colorScheme, {bool isRight = true}) =>
       Container(
@@ -139,9 +144,7 @@ class _DynamicsPageState extends CommonPageState<DynamicsPage>
             if (!_mainController.useSideBar &&
                 MediaQuery.sizeOf(context).isPortrait)
               HomeAppBar(
-                controller: Get.isRegistered<HomeController>()
-                    ? Get.find<HomeController>()
-                    : null,
+                controller: _homeController,
                 mainController: _mainController,
               ),
             Expanded(
