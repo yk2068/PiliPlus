@@ -19,6 +19,10 @@ abstract class CommonListController<R, T> extends CommonController<R, T> {
 
   void checkIsEnd(int length) {}
 
+  /// 翻页追加前过滤一遍新数据，默认原样返回。
+  /// 游标类接口（评论）翻页时服务端会回吐上一页尾部内容，需要按 id 去重。
+  List<T> dedupeOnAppend(List<T> existing, List<T> incoming) => incoming;
+
   @override
   Future<void> queryData([bool isRefresh = true]) async {
     if (isLoading || (!isRefresh && isEnd)) return;
@@ -42,7 +46,7 @@ abstract class CommonListController<R, T> extends CommonController<R, T> {
           checkIsEnd(dataList.length);
           loadingState.value = Success(dataList);
         } else if (loadingState.value case Success(:final response)) {
-          response!.addAll(dataList);
+          response!.addAll(dedupeOnAppend(response, dataList));
           checkIsEnd(response.length);
           loadingState.refresh();
         }

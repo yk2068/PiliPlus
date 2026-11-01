@@ -80,6 +80,20 @@ abstract class ReplyController<R> extends CommonListController<R, ReplyInfo> {
   }
 
   @override
+  List<ReplyInfo> dedupeOnAppend(
+    List<ReplyInfo> existing,
+    List<ReplyInfo> incoming,
+  ) {
+    if (existing.isEmpty || incoming.isEmpty) return incoming;
+    final ids = existing.map((e) => e.id).toSet();
+    final result = <ReplyInfo>[];
+    for (final item in incoming) {
+      if (ids.add(item.id)) result.add(item);
+    }
+    return result;
+  }
+
+  @override
   Future<void> onRefresh() {
     cursorNext = null;
     subjectControl = null;
