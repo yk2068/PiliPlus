@@ -91,6 +91,21 @@ Future<void> _initAppPath() async {
   appSupportDirPath = (await getApplicationSupportDirectory()).path;
 }
 
+/// 缓存目录存在 setting_dump 标记文件时，把设置导出到该目录，
+/// 用于在设备之间迁移设置（无 UI 可用时的兜底通道）
+Future<void> _dumpSettingIfNeeded() async {
+  final flag = File(path.join(downloadPath, 'setting_dump'));
+  if (!flag.existsSync()) return;
+  try {
+    await File(
+      path.join(downloadPath, 'piliplus_setting.json'),
+    ).writeAsString(GStorage.exportAllSettings());
+  } catch (e) {
+    if (kDebugMode) debugPrint('setting dump error: $e');
+  }
+  await flag.delete();
+}
+
 void main() async {
   ScaledWidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
@@ -109,6 +124,7 @@ void main() async {
     CacheManager.ensureInitialized(),
     ?FontUtils.init(),
   ]);
+  await _dumpSettingIfNeeded();
   Get
     ..lazyPut(AccountService.new)
     ..lazyPut(DownloadService.new);

@@ -55,6 +55,7 @@ import 'package:PiliPlus/plugin/pl_player/models/play_repeat.dart';
 import 'package:PiliPlus/plugin/pl_player/models/play_status.dart';
 import 'package:PiliPlus/plugin/pl_player/utils/fullscreen.dart';
 import 'package:PiliPlus/plugin/pl_player/view/view.dart';
+import 'package:PiliPlus/services/download/media_export.dart';
 import 'package:PiliPlus/services/service_locator.dart';
 import 'package:PiliPlus/services/shutdown_timer_service.dart'
     show shutdownTimerService;
@@ -1182,6 +1183,25 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
         PopupMenuItem(
           onTap: () => videoDetailController.onDownload(this.context),
           child: const Text('缓存视频'),
+        ),
+      if (!videoDetailController.isFileSource)
+        PopupMenuItem(
+          onTap: () => MediaExport.saveAudio(
+            this.context,
+            videoDetailController,
+            title: introController.videoDetail.value.title ?? '',
+          ),
+          child: const Text('下载音频'),
+        ),
+      if (!videoDetailController.isFileSource &&
+          videoDetailController.subtitles.isNotEmpty)
+        PopupMenuItem(
+          onTap: () => MediaExport.saveSubtitle(
+            this.context,
+            videoDetailController,
+            title: introController.videoDetail.value.title ?? '',
+          ),
+          child: const Text('下载字幕'),
         ),
       if (videoDetailController.cover.value.isNotEmpty)
         PopupMenuItem(
