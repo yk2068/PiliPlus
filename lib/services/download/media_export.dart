@@ -38,7 +38,14 @@ abstract final class MediaExport {
     required String title,
   }) {
     final audioMap = <int, AudioItem>{};
-    for (final item in ctr.data.dash?.audio ?? const <AudioItem>[]) {
+    final List<AudioItem> audioList;
+    try {
+      audioList = ctr.data.dash?.audio ?? const <AudioItem>[];
+    } catch (_) {
+      SmartDialog.showToast('视频信息未加载完成');
+      return;
+    }
+    for (final item in audioList) {
       final old = audioMap[item.id];
       if (old == null || (item.bandWidth ?? 0) > (old.bandWidth ?? 0)) {
         audioMap[item.id] = item;
@@ -48,7 +55,7 @@ abstract final class MediaExport {
       SmartDialog.showToast('当前视频没有可下载的音轨');
       return;
     }
-    final audioList = audioMap.values.toList()
+    final sorted = audioMap.values.toList()
       ..sort((a, b) => b.id.compareTo(a.id));
     final secondary = ColorScheme.of(context).secondary;
     showDialog(
@@ -56,8 +63,8 @@ abstract final class MediaExport {
       builder: (context) => SimpleDialog(
         clipBehavior: Clip.hardEdge,
         title: const Text('下载音频'),
-        children: List.generate(audioList.length, (i) {
-          final item = audioList[i];
+        children: List.generate(sorted.length, (i) {
+          final item = sorted[i];
           return DialogOption(
             onPressed: () {
               Get.back();
