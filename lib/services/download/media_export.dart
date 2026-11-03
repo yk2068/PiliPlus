@@ -96,10 +96,10 @@ abstract final class MediaExport {
       SmartDialog.showToast('音轨地址为空');
       return;
     }
-    final ext = (item.mimeType ?? '').contains('flac') ? 'flac' : 'm4a';
-    final name = _sanitize(
-      '$title-${ctr.bvid}-${ctr.cid.value}-${item.quality}.$ext',
-    );
+    // 统一存成 m4a，文件名直接用视频标题
+    final base = _sanitize(title);
+    final name =
+        '${base.length > 80 ? base.substring(0, 80) : base}.m4a';
     final dstPath = await _destPath(name);
     if (dstPath == null) return;
 
