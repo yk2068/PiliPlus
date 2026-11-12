@@ -126,23 +126,28 @@ class _DynamicsTabPageState extends State<DynamicsTabPage>
   }
 
   Widget _buildBody(LoadingState<List<DynamicItemModel>?> loadingState) {
+    final list = switch (loadingState) {
+      Success(:final response) =>
+        response?.where((e) => e.visible != false).toList(),
+      _ => null,
+    };
     return switch (loadingState) {
       Loading() => dynSkeleton,
-      Success(:final response) =>
-        response != null && response.isNotEmpty
+      Success() =>
+        list != null && list.isNotEmpty
             ? GlobalData().dynamicsWaterfallFlow
                   ? SliverMasonryGrid(
                       crossAxisSpacing: 4,
                       gridDelegate: dynGridDelegate,
                       delegate: SliverChildBuilderDelegate(
-                        (context, index) => _itemBuilder(response, index),
-                        childCount: response.length,
+                        (context, index) => _itemBuilder(list, index),
+                        childCount: list.length,
                       ),
                     )
                   : SliverList.builder(
                       itemBuilder: (context, index) =>
-                          _itemBuilder(response, index),
-                      itemCount: response.length,
+                          _itemBuilder(list, index),
+                      itemCount: list.length,
                     )
             : HttpError(onReload: controller.onReload),
       Error(:final errMsg) => HttpError(

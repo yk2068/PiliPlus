@@ -14,8 +14,13 @@ abstract final class RecommendFilter {
   );
   static bool enableFilter = rcmdRegExp.pattern.isNotEmpty;
 
+  /// 充电专属视频：不受「已关注豁免」影响
+  static bool filterCharging(BaseVideoItemModel videoItem) =>
+      Pref.blockChargingVideo && videoItem.isCharging;
+
   // (web/app)rcmd
   static bool filterWithExempt(BaseVideoItemModel videoItem) {
+    if (filterCharging(videoItem)) return true;
     //由于相关视频中没有已关注标签，只能视为非关注视频
     if (videoItem.isFollowed && exemptFilterForFollowed) {
       return false;
@@ -50,10 +55,10 @@ abstract final class RecommendFilter {
   static bool filterDisliked(String? bvid) =>
       bvid != null && GlobalData().dislikedBvids.contains(bvid);
 
-
   /// related/[filterWithExempt]
   static bool filterAll(BaseVideoItemModel videoItem) {
-    return filterDuration(videoItem.duration) ||
+    return filterCharging(videoItem) ||
+        filterDuration(videoItem.duration) ||
         filterLikeRatio(videoItem.stat.like, videoItem.stat.view) ||
         filterTitle(videoItem.title) ||
         filterDisliked(videoItem.bvid);

@@ -1172,7 +1172,11 @@ class _VideoDetailPageVState extends State<VideoDetailPageV>
     itemBuilder: (BuildContext context) => <PopupMenuEntry>[
       PopupMenuItem(
         onTap: introController.viewLater,
-        child: const Text('稍后再看'),
+        child: Obx(
+          () => Text(
+            introController.hasLater.value ? '移出稍后再看' : '稍后再看',
+          ),
+        ),
       ),
       if (videoDetailController.epId == null)
         PopupMenuItem(

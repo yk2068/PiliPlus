@@ -13,6 +13,9 @@ abstract class BaseVideoItemModel extends BaseSimpleVideoItemModel {
   String? desc;
   int? pubdate;
   bool isFollowed = false;
+
+  /// 充电专属视频
+  bool isCharging = false;
 }
 
 abstract class BaseOwner {

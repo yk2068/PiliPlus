@@ -1,5 +1,6 @@
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_video.dart';
+import 'package:PiliPlus/utils/charging_video.dart';
 
 abstract class BaseRcmdVideoItemModel extends BaseVideoItemModel {
   String? goto;
@@ -29,6 +30,7 @@ class RcmdVideoItemModel extends BaseRcmdVideoItemModel {
     //     ? RcmdReason.fromJson(json["rcmd_reason"])
     //     : RcmdReason(content: '');
     rcmdReason = json["rcmd_reason"]?['content'];
+    isCharging = ChargingVideo.fromJson(json);
   }
 
   // @override

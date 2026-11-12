@@ -81,6 +81,8 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       });
     }
     videoDetail.value.title = Get.arguments['title'] ?? '';
+    // 列表里「不感兴趣」记下的点踩，进入页面先按本地记录显示
+    hasDislike.value = Pref.isDislikedBvid(bvid);
   }
 
   // 获取视频简介&分p
@@ -167,17 +169,18 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
   Future<void> queryAllStatus() async {
     final result = await VideoHttp.videoRelation(bvid: bvid);
     if (result case Success(:final response)) {
-      late final stat = videoDetail.value.stat;
-      if (response.like!) {
-        stat?.like = max(1, stat.like);
+      final stat = videoDetail.value.stat;
+      if (response.like == true && stat != null) {
+        stat.like = max(1, stat.like);
       }
-      if (response.favorite!) {
-        stat?.favorite = max(1, stat.favorite);
+      if (response.favorite == true && stat != null) {
+        stat.favorite = max(1, stat.favorite);
       }
-      hasLike.value = response.like!;
-      hasDislike.value = response.dislike!;
-      coinNum.value = response.coin!;
-      hasFav.value = response.favorite!;
+      hasLike.value = response.like ?? false;
+      hasDislike.value =
+          (response.dislike ?? false) || Pref.isDislikedBvid(bvid);
+      coinNum.value = response.coin ?? 0;
+      hasFav.value = response.favorite ?? false;
     }
   }
 
@@ -211,6 +214,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
         hasFav.value = true;
       }
       hasDislike.value = false;
+      Pref.removeDislikedBvid(bvid);
       if (!hasCoin) {
         SmartDialog.showToast('投币失败');
       } else {
@@ -239,6 +243,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       hasLike.value = newVal;
       if (newVal) {
         hasDislike.value = false;
+        Pref.removeDislikedBvid(bvid);
       }
     } else {
       result.toast();
@@ -258,6 +263,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       if (!hasDislike.value) {
         SmartDialog.showToast('点踩成功');
         hasDislike.value = true;
+        Pref.addDislikedBvid(bvid);
         if (hasLike.value) {
           videoDetail.value.stat?.like--;
           hasLike.value = false;
@@ -265,6 +271,7 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       } else {
         SmartDialog.showToast('取消踩');
         hasDislike.value = false;
+        Pref.removeDislikedBvid(bvid);
       }
     } else {
       res.toast();
@@ -548,7 +555,9 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
 
         hasLater.value = videoDetailCtr.sourceType == SourceType.watchLater;
         this.bvid = bvid;
+        hasDislike.value = Pref.isDislikedBvid(bvid);
         queryVideoIntro();
+        queryWatchLaterStatus();
       } else {
         if (episode is Part) {
           final videoDetail = this.videoDetail.value;
@@ -657,7 +666,8 @@ class UgcIntroController extends CommonIntroController with ReloadMixin {
       final List<BaseEpisodeItem> episodes = <BaseEpisodeItem>[];
       bool isPart = false;
       final videoDetail = this.videoDetail.value;
-      final PlayRepeat playRepeat = videoDetailCtr.plPlayerController.playRepeat;
+      final PlayRepeat playRepeat =
+          videoDetailCtr.plPlayerController.playRepeat;
 
       // 分P连播：只在该稿件内部按页序切换 cid，BV 号保持不变；
       // 播完最后一个 P 即停止，不进入媒体列表或合集的下一个视频。

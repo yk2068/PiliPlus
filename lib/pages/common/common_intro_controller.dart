@@ -83,6 +83,7 @@ abstract class CommonIntroController extends GetxController
     );
 
     queryVideoIntro();
+    queryWatchLaterStatus();
     startTimer();
   }
 
@@ -156,6 +157,33 @@ abstract class CommonIntroController extends GetxController
         ? UserHttp.toViewDel(aids: IdUtils.bv2av(bvid).toString())
         : UserHttp.toViewLater(bvid: bvid));
     if (res.isSuccess) hasLater.toggle();
+  }
+
+  /// 进入页面时核对稍后再看状态。路由参数只覆盖「从稍后再看列表打开」这一种情况
+  Future<void> queryWatchLaterStatus() async {
+    if (!isLogin || !bvid.startsWith('BV') || bvid.length < 12) return;
+    final aid = IdUtils.bv2av(bvid);
+    const ps = 100;
+    var page = 1;
+    while (page <= 5) {
+      final res = await UserHttp.seeYouLater(page: page, ps: ps);
+      if (res case Success(:final response)) {
+        final list = response.list;
+        if (list == null) return;
+        if (list.any((e) => e.aid == aid || e.bvid == bvid)) {
+          hasLater.value = true;
+          return;
+        }
+        final count = response.count ?? list.length;
+        if (list.length < ps || page * ps >= count) {
+          hasLater.value = false;
+          return;
+        }
+        page++;
+      } else {
+        return;
+      }
+    }
   }
 }
 

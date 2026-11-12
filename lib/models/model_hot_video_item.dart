@@ -3,6 +3,7 @@ import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/models_new/video/video_detail/dimension.dart';
 import 'package:PiliPlus/pages/common/multi_select/base.dart';
+import 'package:PiliPlus/utils/charging_video.dart';
 
 // 稍后再看, 排行榜等网页返回也使用该类
 class HotVideoItemModel extends HorizontalVideoModel with MultiSelectData {
@@ -46,6 +47,7 @@ class HotVideoItemModel extends HorizontalVideoModel with MultiSelectData {
     } else {
       badge = json['pgc_label'];
     }
+    isCharging = ChargingVideo.fromJson(json);
   }
 }
 

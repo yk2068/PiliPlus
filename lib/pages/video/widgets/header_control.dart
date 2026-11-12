@@ -389,7 +389,14 @@ class HeaderControlState extends State<HeaderControl>
                       introController.viewLater();
                     },
                     leading: const Icon(Icons.watch_later_outlined, size: 20),
-                    title: const Text('添加至「稍后再看」', style: titleStyle),
+                    title: Obx(
+                      () => Text(
+                        introController.hasLater.value
+                            ? '从「稍后再看」移除'
+                            : '添加至「稍后再看」',
+                        style: titleStyle,
+                      ),
+                    ),
                   ),
                 if (videoDetailCtr.epId == null)
                   if (!isHidden('noteList'))

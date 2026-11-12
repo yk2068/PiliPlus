@@ -296,6 +296,7 @@ class PgcIntroController extends CommonIntroController {
       }
 
       hasLater.value = videoDetailCtr.sourceType == SourceType.watchLater;
+      queryWatchLaterStatus();
       this.cid.value = cid;
       queryOnlineTotal();
       queryVideoIntro(episode as EpisodeItem);

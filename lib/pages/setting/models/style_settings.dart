@@ -170,7 +170,7 @@ List<SettingsModel> get styleSettings => [
   ),
   const SwitchModel(
     title: '屏蔽充电视频',
-    subtitle: '动态流里隐藏带「充电专属」标记的投稿',
+    subtitle: '隐藏推荐、热门、排行、相关视频与动态流里的充电专属视频',
     leading: Icon(Icons.bolt_outlined),
     setKey: SettingBoxKey.blockChargingVideo,
     defaultVal: false,

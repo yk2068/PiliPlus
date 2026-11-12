@@ -6,6 +6,7 @@ import 'package:PiliPlus/models/dynamics/article_content_model.dart';
 import 'package:PiliPlus/models/model_avatar.dart';
 import 'package:PiliPlus/models/model_owner.dart';
 import 'package:PiliPlus/models_new/live/live_feed_index/watched_show.dart';
+import 'package:PiliPlus/utils/charging_video.dart';
 import 'package:PiliPlus/utils/extension/iterable_ext.dart';
 import 'package:PiliPlus/utils/parse_bool.dart';
 import 'package:PiliPlus/utils/parse_int.dart';
@@ -105,6 +106,9 @@ class DynamicItemModel {
   String? type;
   bool? visible;
 
+  /// 原始数据里带充电专属标记（含转发原文）
+  bool isChargeVideo = false;
+
   late bool linkFolded = false;
 
   // opus
@@ -121,6 +125,7 @@ class DynamicItemModel {
     }
     type = json['type'];
     visible = json['visible'];
+    isChargeVideo = ChargingVideo.fromDynamicJson(json);
   }
 
   DynamicItemModel.fromOpusJson(Map<String, dynamic> json) {
@@ -137,6 +142,7 @@ class DynamicItemModel {
     if (json['fallback'] != null) {
       fallback = Fallback.fromJson(json['fallback']);
     }
+    isChargeVideo = ChargingVideo.fromDynamicJson(json);
   }
 }
 

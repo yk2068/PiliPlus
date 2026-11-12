@@ -30,9 +30,9 @@ extension DynamicItemExt on DynamicItemModel {
     return bvid != null && bvid.startsWith('BV') ? bvid : null;
   }
 
-  /// 充电专属投稿：稿件卡片右上角的「充电专属」徽标。
-  bool get isChargingVideo {
-    final text = videoArchive?.badge?.text;
-    return text != null && text.contains('充电');
-  }
+  /// 充电专属内容：覆盖动态里所有卡片形态与转发原文
+  bool get isChargingVideo =>
+      isChargeVideo ||
+      (videoArchive?.badge?.text?.contains('充电') ?? false) ||
+      (orig?.isChargingVideo ?? false);
 }

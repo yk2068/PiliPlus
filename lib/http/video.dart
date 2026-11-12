@@ -30,6 +30,7 @@ import 'package:PiliPlus/models_new/video/video_relation/data.dart';
 import 'package:PiliPlus/models_new/video/video_shot/data.dart';
 import 'package:PiliPlus/utils/accounts.dart';
 import 'package:PiliPlus/utils/app_sign.dart';
+import 'package:PiliPlus/utils/charging_video.dart';
 import 'package:PiliPlus/utils/extension/string_ext.dart';
 import 'package:PiliPlus/utils/global_data.dart';
 import 'package:PiliPlus/utils/id_utils.dart';
@@ -84,6 +85,7 @@ abstract final class VideoHttp {
 
   static bool _filterWebRcmd(dynamic i) {
     if (i['goto'] != 'av') return true;
+    if (Pref.blockChargingVideo && ChargingVideo.fromJson(i)) return true;
     if (i['owner'] != null &&
         GlobalData().blackMids.contains(i['owner']['mid'])) {
       return true;
@@ -105,6 +107,7 @@ abstract final class VideoHttp {
   }
 
   static bool _filterAppRcmd(dynamic i) {
+    if (Pref.blockChargingVideo && ChargingVideo.fromJson(i)) return true;
     if (i['card_goto'] == 'ad_av' ||
         i['card_goto'] == 'ad_web_s' ||
         i['ad_info'] != null ||
@@ -196,6 +199,7 @@ abstract final class VideoHttp {
   }
 
   static bool _filterHotAndRank(dynamic i) {
+    if (Pref.blockChargingVideo && ChargingVideo.fromJson(i)) return false;
     if (GlobalData().blackMids.contains(i['owner']['mid'])) return false;
     if (RecommendFilter.filterTitle(i['title'])) return false;
     if (RecommendFilter.filterLikeRatio(i['stat']['like'], i['stat']['view'])) {
@@ -409,9 +413,15 @@ abstract final class VideoHttp {
       final items = (res.data['data'] as List?)?.map(
         (i) => HotVideoItemModel.fromJson(i),
       );
-      final list = RecommendFilter.applyFilterToRelatedVideos
-          ? items?.where((i) => !RecommendFilter.filterAll(i)).toList()
-          : items?.toList();
+      // 充电屏蔽独立于「相关视频也应用推荐过滤」开关
+      final list = items
+          ?.where(
+            (i) =>
+                !RecommendFilter.filterCharging(i) &&
+                (!RecommendFilter.applyFilterToRelatedVideos ||
+                    !RecommendFilter.filterAll(i)),
+          )
+          .toList();
       return Success(list);
     } else {
       return Error(res.data['message']);
