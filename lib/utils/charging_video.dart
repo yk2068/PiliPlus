@@ -1,9 +1,10 @@
-/// B 站各接口标记充电专属视频的字段不统一：
+/// B 站各接口标记充电视频的字段不统一：
 /// 推荐 / 热门 / 排行 / 稍后再看是 charging_pay，空间投稿 / 搜索是
-/// is_charging_arc，视频详情是 is_upower_exclusive，动态卡片是 badge.text。
+/// is_charging_arc，视频详情是 is_upower_exclusive / is_upower_preview，
+/// 动态卡片是 badge.text（充电专属，或充电抢先看标注的「抢先看」）。
 abstract final class ChargingVideo {
   static bool isChargingText(String? text) =>
-      text != null && text.contains('充电');
+      text != null && (text.contains('充电') || text.contains('抢先看'));
 
   static bool fromJson(dynamic json) {
     if (json is! Map) return false;
@@ -12,6 +13,7 @@ abstract final class ChargingVideo {
         json['is_charging_arc'] == true ||
         json['is_charging_arc'] == 1 ||
         json['is_upower_exclusive'] == true ||
+        json['is_upower_preview'] == true ||
         json['is_charging'] == true) {
       return true;
     }

@@ -40,6 +40,10 @@ class DynamicsTabController
     return super.onRefresh();
   }
 
+  bool _shouldHide(DynamicItemModel item) =>
+      (Pref.blockChargingVideo && item.isChargingVideo) ||
+      (GlobalData().dynCompact && !item.isVideoDynamic);
+
   @override
   List<DynamicItemModel>? getDataList(DynamicsDataModel response) {
     offset = response.offset;
@@ -51,8 +55,7 @@ class DynamicsTabController
     // 只打不可见标记，不从列表里删：删了会让「本页全是充电视频」变成空页，
     // 而空页会把翻页直接判成到底。
     for (final item in items) {
-      if ((Pref.blockChargingVideo && item.isChargingVideo) ||
-          (GlobalData().dynCompact && !item.isVideoDynamic)) {
+      if (_shouldHide(item)) {
         item.visible = false;
       }
     }
@@ -102,14 +105,14 @@ class DynamicsTabController
     var matched = false;
     for (final e in list) {
       if (ids.contains('${e.idStr}')) {
-        e.visible = true;
         matched = true;
+        if (!_shouldHide(e)) e.visible = true;
       }
     }
     if (!matched) {
       final end = index + 1 + ids.length;
       for (int i = index + 1; i < end && i < list.length; i++) {
-        list[i].visible = true;
+        if (!_shouldHide(list[i])) list[i].visible = true;
       }
     }
     item.modules.moduleFold = null;

@@ -1,4 +1,5 @@
 import 'package:PiliPlus/models/dynamics/result.dart';
+import 'package:PiliPlus/utils/charging_video.dart';
 
 /// 动态里挂载了可播放稿件的类型：投稿、合集、番剧、课程。
 /// 其余（图文、转发、直播、专栏…）在精简模式下不展示。
@@ -30,9 +31,9 @@ extension DynamicItemExt on DynamicItemModel {
     return bvid != null && bvid.startsWith('BV') ? bvid : null;
   }
 
-  /// 充电专属内容：覆盖动态里所有卡片形态与转发原文
+  /// 充电专属与充电抢先看：覆盖动态里所有卡片形态与转发原文
   bool get isChargingVideo =>
       isChargeVideo ||
-      (videoArchive?.badge?.text?.contains('充电') ?? false) ||
+      ChargingVideo.isChargingText(videoArchive?.badge?.text) ||
       (orig?.isChargingVideo ?? false);
 }
