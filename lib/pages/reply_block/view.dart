@@ -1,6 +1,7 @@
 import 'package:PiliPlus/common/widgets/dialog/dialog.dart';
 import 'package:PiliPlus/common/widgets/dialog/export_import.dart';
 import 'package:PiliPlus/common/widgets/scaffold/simple_scaffold.dart';
+import 'package:PiliPlus/common/widgets/scroll_physics.dart' show tabBarView;
 import 'package:PiliPlus/common/widgets/sliver_wrap.dart';
 import 'package:PiliPlus/common/widgets/view_sliver_safe_area.dart';
 import 'package:PiliPlus/grpc/reply.dart';
@@ -10,6 +11,8 @@ import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:material_ui/material_ui.dart';
 
+const _tabs = ['评论内容', '用户名'];
+
 class ReplyBlockPage extends StatefulWidget {
   const ReplyBlockPage({super.key});
 
@@ -17,7 +20,12 @@ class ReplyBlockPage extends StatefulWidget {
   State<ReplyBlockPage> createState() => _ReplyBlockPageState();
 }
 
-class _ReplyBlockPageState extends State<ReplyBlockPage> {
+class _ReplyBlockPageState extends State<ReplyBlockPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController = TabController(
+    length: _tabs.length,
+    vsync: this,
+  );
   late EdgeInsets padding;
 
   @override
@@ -26,21 +34,38 @@ class _ReplyBlockPageState extends State<ReplyBlockPage> {
     padding = MediaQuery.viewPaddingOf(context);
   }
 
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
   void _refresh() {
     if (mounted) setState(() {});
   }
 
+  List<String> _rulesOf(int tab) =>
+      tab == 0 ? ReplyGrpc.blockRules : ReplyGrpc.userBlockRules;
+
   void _showEditDialog([String? initial]) {
+    final tab = _tabController.index;
+    final forUser = tab == 1;
     var text = initial ?? '';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(initial == null ? '添加屏蔽词' : '编辑屏蔽词'),
+        title: Text(
+          initial == null
+              ? '添加${_tabs[tab]}屏蔽词'
+              : '编辑${_tabs[tab]}屏蔽词',
+        ),
         content: Column(
           mainAxisSize: .min,
           crossAxisAlignment: .start,
           children: [
-            const Text('每条为正则表达式，同时匹配评论内容与用户名'),
+            Text(
+              forUser ? '每条为正则表达式，只匹配评论用户名' : '每条为正则表达式，只匹配评论内容',
+            ),
             const SizedBox(height: 8),
             TextFormField(
               initialValue: text,
@@ -48,9 +73,9 @@ class _ReplyBlockPageState extends State<ReplyBlockPage> {
               minLines: 1,
               maxLines: 4,
               onChanged: (value) => text = value,
-              decoration: const InputDecoration(
-                hintText: '如：广告|推广',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: forUser ? r'如：^张三$' : '如：广告|推广',
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -70,7 +95,7 @@ class _ReplyBlockPageState extends State<ReplyBlockPage> {
                 SmartDialog.showToast('正则表达式无效');
                 return;
               }
-              final rules = [...ReplyGrpc.blockRules];
+              final rules = [..._rulesOf(tab)];
               if (initial == null) {
                 if (rules.contains(value)) {
                   SmartDialog.showToast('该屏蔽词已存在');
@@ -82,7 +107,7 @@ class _ReplyBlockPageState extends State<ReplyBlockPage> {
                 if (index == -1) return;
                 rules[index] = value;
               }
-              ReplyGrpc.setBlockRules(rules);
+              ReplyGrpc.setBlockRules(rules, forUser: forUser);
               Get.back();
               _refresh();
             },
@@ -94,122 +119,159 @@ class _ReplyBlockPageState extends State<ReplyBlockPage> {
   }
 
   void _confirmDelete(String rule) {
+    final forUser = _tabController.index == 1;
     showConfirmDialog(
       context: context,
       title: const Text('删除该屏蔽词？'),
       content: Text(rule),
       onConfirm: () {
-        ReplyGrpc.setBlockRules([...ReplyGrpc.blockRules]..remove(rule));
+        ReplyGrpc.setBlockRules(
+          [..._rulesOf(forUser ? 1 : 0)]..remove(rule),
+          forUser: forUser,
+        );
         _refresh();
       },
     );
   }
 
   void _showImportExportDialog() {
-    showImportExportDialog<List>(
+    showImportExportDialog<Object?>(
       context,
       title: '评论屏蔽词',
       localFileName: () => 'replyBlockRules',
-      onExport: () => Utils.jsonEncoder.convert(ReplyGrpc.blockRules),
+      onExport: () => Utils.jsonEncoder.convert({
+        'content': ReplyGrpc.blockRules,
+        'user': ReplyGrpc.userBlockRules,
+      }),
       onImport: (json) {
-        final rules = [...ReplyGrpc.blockRules];
+        // 旧格式是纯数组，按内容规则处理
+        final content = <String>[...ReplyGrpc.blockRules];
+        final user = <String>[...ReplyGrpc.userBlockRules];
         var skipped = 0;
-        for (final e in json) {
-          if (e is! String) {
-            skipped++;
-            continue;
+
+        void merge(List<String> target, Object? raw) {
+          if (raw is! List) return;
+          for (final e in raw) {
+            if (e is! String) {
+              skipped++;
+              continue;
+            }
+            final value = e.trim();
+            if (!ReplyGrpc.isValidRule(value)) {
+              skipped++;
+              continue;
+            }
+            if (!target.contains(value)) target.add(value);
           }
-          final value = e.trim();
-          if (!ReplyGrpc.isValidRule(value)) {
-            skipped++;
-            continue;
-          }
-          if (!rules.contains(value)) rules.add(value);
         }
-        ReplyGrpc.setBlockRules(rules);
+
+        if (json is Map) {
+          merge(content, json['content']);
+          merge(user, json['user']);
+        } else {
+          merge(content, json);
+        }
+
+        ReplyGrpc.setBlockRules(content);
+        ReplyGrpc.setBlockRules(user, forUser: true);
         _refresh();
         if (skipped > 0) SmartDialog.showToast('已跳过 $skipped 条无效内容');
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final rules = ReplyGrpc.blockRules;
-    return SimpleScaffold(
-      appBar: AppBar(title: const Text('评论屏蔽词')),
-      body: ScaffoldLayout(
-        fab: Padding(
-          padding: .only(
-            right: kFloatingActionButtonMargin + padding.right,
-            bottom: kFloatingActionButtonMargin + padding.bottom,
+  Widget _buildList(List<String> rules, String emptyText) {
+    if (rules.isEmpty) {
+      return CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: Text(emptyText)),
           ),
-          child: Column(
-            spacing: kFloatingActionButtonMargin,
-            mainAxisSize: .min,
-            children: [
-              FloatingActionButton(
-                tooltip: '导入/导出',
-                onPressed: _showImportExportDialog,
-                child: const Icon(Icons.swap_vert, size: 26),
-              ),
-              FloatingActionButton(
-                tooltip: '添加',
-                onPressed: _showEditDialog,
-                child: const Icon(Icons.add),
-              ),
-            ],
-          ),
-        ),
-        body: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const .fromLTRB(12, 12, 12, 4),
-                child: Text(
-                  '每条为正则表达式，同时匹配评论内容与用户名',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
+        ],
+      );
+    }
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        ViewSliverSafeArea(
+          bottom: 180,
+          sliver: SliverPadding(
+            padding: const .fromLTRB(12, 12, 12, 0),
+            sliver: SliverFixedWrap(
+              spacing: 8,
+              runSpacing: 8,
+              mainAxisExtent: 30,
+              delegate: SliverChildBuilderDelegate(
+                addAutomaticKeepAlives: false,
+                addRepaintBoundaries: false,
+                childCount: rules.length,
+                (context, index) {
+                  final rule = rules[index];
+                  return SearchText(
+                    text: rule,
+                    onTap: (_) => _showEditDialog(rule),
+                    onLongPress: (_) => _confirmDelete(rule),
+                    height: 1,
+                    maxLines: 1,
+                    fontSize: 14,
+                    overflow: .ellipsis,
+                    padding: const .fromLTRB(11, 8, 11, 0),
+                  );
+                },
               ),
             ),
-            ViewSliverSafeArea(
-              bottom: 180,
-              sliver:
-                  rules.isEmpty
-                      ? const SliverFillRemaining(
-                        hasScrollBody: false,
-                        child: Center(child: Text('还未添加屏蔽词')),
-                      )
-                      : SliverPadding(
-                        padding: const .fromLTRB(12, 8, 12, 0),
-                        sliver: SliverFixedWrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          mainAxisExtent: 30,
-                          delegate: SliverChildBuilderDelegate(
-                            addAutomaticKeepAlives: false,
-                            addRepaintBoundaries: false,
-                            childCount: rules.length,
-                            (context, index) {
-                              final rule = rules[index];
-                              return SearchText(
-                                text: rule,
-                                onTap: (_) => _showEditDialog(rule),
-                                onLongPress: (_) => _confirmDelete(rule),
-                                height: 1,
-                                maxLines: 1,
-                                fontSize: 14,
-                                overflow: .ellipsis,
-                                padding: const .fromLTRB(11, 8, 11, 0),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final contentRules = ReplyGrpc.blockRules;
+    final userRules = ReplyGrpc.userBlockRules;
+    return SimpleScaffold(
+      appBar: AppBar(title: const Text('评论屏蔽词')),
+      body: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(text: '评论内容 (${contentRules.length})'),
+              Tab(text: '用户名 (${userRules.length})'),
+            ],
+          ),
+          Expanded(
+            child: tabBarView(
+              controller: _tabController,
+              children: [
+                _buildList(contentRules, '还未添加评论内容屏蔽词'),
+                _buildList(userRules, '还未添加用户名屏蔽词'),
+              ],
+            ),
+          ),
+        ],
+      ),
+      fab: Padding(
+        padding: .only(
+          right: kFloatingActionButtonMargin + padding.right,
+          bottom: kFloatingActionButtonMargin + padding.bottom,
+        ),
+        child: Column(
+          spacing: kFloatingActionButtonMargin,
+          mainAxisSize: .min,
+          children: [
+            FloatingActionButton(
+              tooltip: '导入/导出',
+              onPressed: _showImportExportDialog,
+              child: const Icon(Icons.swap_vert, size: 26),
+            ),
+            FloatingActionButton(
+              tooltip: '添加',
+              onPressed: _showEditDialog,
+              child: const Icon(Icons.add),
             ),
           ],
         ),

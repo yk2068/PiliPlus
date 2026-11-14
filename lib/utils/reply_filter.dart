@@ -1,4 +1,4 @@
-/// 评论屏蔽词：每条是独立正则，同时匹配评论内容与用户名
+/// 评论屏蔽词：评论内容与用户名各用一组独立的正则，互不串用
 abstract final class ReplyFilter {
   static bool isValidRule(String pattern) {
     if (pattern.isEmpty) return false;
@@ -21,15 +21,15 @@ abstract final class ReplyFilter {
   }
 
   static bool isBlocked(
-    List<RegExp> regExps,
+    List<RegExp> contentRegExps,
+    List<RegExp> userRegExps,
     String message,
     String name,
   ) {
-    if (regExps.isEmpty) return false;
-    return regExps.any(
-      (regExp) =>
-          regExp.hasMatch(message) ||
-          (name.isNotEmpty && regExp.hasMatch(name)),
-    );
+    if (contentRegExps.any((regExp) => regExp.hasMatch(message))) {
+      return true;
+    }
+    if (name.isEmpty || userRegExps.isEmpty) return false;
+    return userRegExps.any((regExp) => regExp.hasMatch(name));
   }
 }

@@ -226,9 +226,12 @@ List<SettingsModel> get extraSettings => [
   NormalModel(
     leading: const Icon(Icons.filter_alt_outlined),
     title: '评论关键词过滤',
-    getSubtitle: () => ReplyGrpc.blockRules.isEmpty
-        ? '支持正则、匹配用户名，点击管理'
-        : '已添加 ${ReplyGrpc.blockRules.length} 条，支持正则、匹配用户名',
+    getSubtitle: () {
+      final content = ReplyGrpc.blockRules.length;
+      final user = ReplyGrpc.userBlockRules.length;
+      if (content == 0 && user == 0) return '支持正则，内容与用户名分开匹配';
+      return '内容 $content 条 · 用户名 $user 条，支持正则';
+    },
     onTap: (context, setState) async {
       await Get.toNamed('/replyBlockPage');
       setState();

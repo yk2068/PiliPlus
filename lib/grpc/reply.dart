@@ -14,46 +14,72 @@ import 'package:fixnum/fixnum.dart';
 abstract final class ReplyGrpc {
   static bool antiGoodsReply = Pref.antiGoodsReply;
 
-  /// 每条屏蔽词是独立的正则表达式，同时匹配评论内容与用户名
-  static List<String> blockRules = _loadRules();
+  /// 评论内容屏蔽词，每条是独立的正则表达式
+  static List<String> blockRules = _loadRules(false);
   static List<RegExp> _blockRegExps = ReplyFilter.compile(blockRules);
 
-  static bool get enableFilter => _blockRegExps.isNotEmpty;
+  /// 用户名屏蔽词，与内容规则分开匹配
+  static List<String> userBlockRules = _loadRules(true);
+  static List<RegExp> _userBlockRegExps = ReplyFilter.compile(userBlockRules);
 
-  static List<String> _loadRules() {
-    final stored = GStorage.setting.get(SettingBoxKey.replyBlockRules);
+  static bool get enableFilter =>
+      _blockRegExps.isNotEmpty || _userBlockRegExps.isNotEmpty;
+
+  static List<String> _loadRules(bool forUser) {
+    final key = forUser
+        ? SettingBoxKey.replyUserBlockRules
+        : SettingBoxKey.replyBlockRules;
+    final stored = GStorage.setting.get(key);
     if (stored is List) {
       return stored.whereType<String>().where((e) => e.isNotEmpty).toList();
     }
+    if (forUser) return <String>[];
     // 旧版本把全部规则塞在一个正则字符串里，首次读取时迁移成一条规则
     final legacy = Pref.banWordForReply;
     final rules = legacy.isEmpty ? <String>[] : [legacy];
     if (rules.isNotEmpty) {
-      GStorage.setting.put(SettingBoxKey.replyBlockRules, rules);
+      GStorage.setting.put(key, rules);
     }
     return rules;
   }
 
   static bool isValidRule(String pattern) => ReplyFilter.isValidRule(pattern);
 
-  static void setBlockRules(List<String> rules) {
-    blockRules = rules
+  static void setBlockRules(List<String> rules, {bool forUser = false}) {
+    final list = rules
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty && isValidRule(e))
         .toSet()
         .toList();
-    _blockRegExps = ReplyFilter.compile(blockRules);
-    GStorage.setting.put(SettingBoxKey.replyBlockRules, blockRules);
+    final regExps = ReplyFilter.compile(list);
+    if (forUser) {
+      userBlockRules = list;
+      _userBlockRegExps = regExps;
+    } else {
+      blockRules = list;
+      _blockRegExps = regExps;
+    }
+    GStorage.setting.put(
+      forUser
+          ? SettingBoxKey.replyUserBlockRules
+          : SettingBoxKey.replyBlockRules,
+      list,
+    );
   }
 
-  static bool addBlockRule(String pattern) {
-    if (!isValidRule(pattern) || blockRules.contains(pattern)) return false;
-    setBlockRules([...blockRules, pattern]);
+  static bool addBlockRule(String pattern, {bool forUser = false}) {
+    final current = forUser ? userBlockRules : blockRules;
+    if (!isValidRule(pattern) || current.contains(pattern)) return false;
+    setBlockRules([...current, pattern], forUser: forUser);
     return true;
   }
 
-  static bool isBlocked(String message, String name) =>
-      ReplyFilter.isBlocked(_blockRegExps, message, name);
+  static bool isBlocked(String message, String name) => ReplyFilter.isBlocked(
+    _blockRegExps,
+    _userBlockRegExps,
+    message,
+    name,
+  );
 
   // static Future replyInfo({required int rpid}) {
   //   return _request(
