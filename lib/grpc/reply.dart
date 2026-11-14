@@ -5,16 +5,55 @@ import 'package:PiliPlus/grpc/grpc_req.dart';
 import 'package:PiliPlus/grpc/url.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/utils/global_data.dart';
+import 'package:PiliPlus/utils/reply_filter.dart';
+import 'package:PiliPlus/utils/storage.dart';
+import 'package:PiliPlus/utils/storage_key.dart';
 import 'package:PiliPlus/utils/storage_pref.dart';
 import 'package:fixnum/fixnum.dart';
 
 abstract final class ReplyGrpc {
   static bool antiGoodsReply = Pref.antiGoodsReply;
-  static RegExp replyRegExp = RegExp(
-    Pref.banWordForReply,
-    caseSensitive: false,
-  );
-  static bool enableFilter = replyRegExp.pattern.isNotEmpty;
+
+  /// 每条屏蔽词是独立的正则表达式，同时匹配评论内容与用户名
+  static List<String> blockRules = _loadRules();
+  static List<RegExp> _blockRegExps = ReplyFilter.compile(blockRules);
+
+  static bool get enableFilter => _blockRegExps.isNotEmpty;
+
+  static List<String> _loadRules() {
+    final stored = GStorage.setting.get(SettingBoxKey.replyBlockRules);
+    if (stored is List) {
+      return stored.whereType<String>().where((e) => e.isNotEmpty).toList();
+    }
+    // 旧版本把全部规则塞在一个正则字符串里，首次读取时迁移成一条规则
+    final legacy = Pref.banWordForReply;
+    final rules = legacy.isEmpty ? <String>[] : [legacy];
+    if (rules.isNotEmpty) {
+      GStorage.setting.put(SettingBoxKey.replyBlockRules, rules);
+    }
+    return rules;
+  }
+
+  static bool isValidRule(String pattern) => ReplyFilter.isValidRule(pattern);
+
+  static void setBlockRules(List<String> rules) {
+    blockRules = rules
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty && isValidRule(e))
+        .toSet()
+        .toList();
+    _blockRegExps = ReplyFilter.compile(blockRules);
+    GStorage.setting.put(SettingBoxKey.replyBlockRules, blockRules);
+  }
+
+  static bool addBlockRule(String pattern) {
+    if (!isValidRule(pattern) || blockRules.contains(pattern)) return false;
+    setBlockRules([...blockRules, pattern]);
+    return true;
+  }
+
+  static bool isBlocked(String message, String name) =>
+      ReplyFilter.isBlocked(_blockRegExps, message, name);
 
   // static Future replyInfo({required int rpid}) {
   //   return _request(
@@ -39,7 +78,7 @@ abstract final class ReplyGrpc {
 
   static bool needRemoveGrpc(ReplyInfo reply) {
     return GlobalData().blackMids.contains(reply.mid.toInt()) ||
-        (enableFilter && replyRegExp.hasMatch(reply.content.message)) ||
+        isBlocked(reply.content.message, reply.member.name) ||
         (antiGoodsReply && needRemoveGoodGrpc(reply));
   }
 

@@ -33,38 +33,18 @@ void showReplyCopyDialog(
               buttonItems.add(
                 ContextMenuButtonItem(
                   onPressed: () {
-                    String text = RegExp.escape(state.selectedText!);
-                    if (ReplyGrpc.enableFilter) text = '|$text';
-
+                    final selected = state.selectedText!;
                     showConfirmDialog(
                       context: context,
-                      title: const Text('是否确认评论过滤的变更：'),
-                      content: Text.rich(
-                        TextSpan(
-                          text: ReplyGrpc.replyRegExp.pattern,
-                          children: [
-                            TextSpan(
-                              text: text,
-                              style: const TextStyle(
-                                color: Colors.green,
-                                fontWeight: .bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      title: const Text('将选中文本加入评论屏蔽词？'),
+                      content: Text(selected),
                       onConfirm: () {
-                        final filter = ReplyGrpc.replyRegExp.pattern + text;
-                        ReplyGrpc.replyRegExp = RegExp(
-                          filter,
-                          caseSensitive: true,
+                        final added = ReplyGrpc.addBlockRule(
+                          RegExp.escape(selected),
                         );
-                        ReplyGrpc.enableFilter = true;
-                        GStorage.setting.put(
-                          SettingBoxKey.banWordForReply,
-                          filter,
+                        SmartDialog.showToast(
+                          added ? '已加入评论屏蔽词' : '该屏蔽词已存在或无效',
                         );
-                        SmartDialog.showToast('已保存');
                       },
                     );
                   },

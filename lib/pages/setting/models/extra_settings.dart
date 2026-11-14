@@ -223,12 +223,15 @@ List<SettingsModel> get extraSettings => [
     setKey: SettingBoxKey.continuePlayingPart,
     defaultVal: true,
   ),
-  getBanWordModel(
+  NormalModel(
+    leading: const Icon(Icons.filter_alt_outlined),
     title: '评论关键词过滤',
-    key: SettingBoxKey.banWordForReply,
-    onChanged: (value) {
-      ReplyGrpc.replyRegExp = value;
-      ReplyGrpc.enableFilter = value.pattern.isNotEmpty;
+    getSubtitle: () => ReplyGrpc.blockRules.isEmpty
+        ? '支持正则、匹配用户名，点击管理'
+        : '已添加 ${ReplyGrpc.blockRules.length} 条，支持正则、匹配用户名',
+    onTap: (context, setState) async {
+      await Get.toNamed('/replyBlockPage');
+      setState();
     },
   ),
   getBanWordModel(
