@@ -1004,34 +1004,55 @@ class _UgcIntroPanelState extends State<UgcIntroPanel> {
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
-        children: tags
-            .map(
-              (item) => SearchText(
-                fontSize: 13,
-                text: switch (item.tagType) {
-                  'bgm' => item.tagName!.replaceFirst('发现', '♫ BGM：'),
-                  'topic' => '#${item.tagName}',
-                  _ => item.tagName!,
-                },
-                onTap: switch (item.tagType) {
-                  'bgm' => (_) => Get.toNamed(
-                    '/musicDetail',
-                    parameters: {'musicId': item.musicId!},
-                  ),
-                  'topic' => (_) => Get.toNamed(
-                    '/dynTopic',
-                    parameters: {'id': item.tagId!.toString()},
-                  ),
-                  _ => (tagName) => Get.toNamed(
-                    '/searchResult',
-                    parameters: {'keyword': tagName},
-                  ),
-                },
-                onLongPress: Utils.copyText,
-              ),
-            )
-            .toList(),
+        children: tags.map(_buildTag).toList(),
       ),
     );
+  }
+
+  /// BGM 标签的 tagName 形如「发现《Sign of the Times》」，曲名要剥掉前缀和书名号
+  static String _bgmSongName(String? tagName) {
+    final name = (tagName ?? '')
+        .replaceFirst('发现', '')
+        .trim()
+        .replaceAll(RegExp(r'^[《<「]+|[》>」]+$'), '')
+        .trim();
+    return name.isEmpty ? (tagName ?? '') : name;
+  }
+
+  Widget _buildTag(VideoTagItem item) {
+    final tagName = item.tagName ?? '';
+    switch (item.tagType) {
+      case 'bgm':
+        final songName = _bgmSongName(tagName);
+        return SearchText(
+          fontSize: 13,
+          text: '♫ BGM：$songName',
+          onTap: (_) => Get.toNamed(
+            '/searchResult',
+            parameters: {'keyword': songName},
+          ),
+          onLongPress: (_) => Utils.copyText(songName),
+        );
+      case 'topic':
+        return SearchText(
+          fontSize: 13,
+          text: '#$tagName',
+          onTap: (_) => Get.toNamed(
+            '/dynTopic',
+            parameters: {'id': item.tagId!.toString()},
+          ),
+          onLongPress: Utils.copyText,
+        );
+      default:
+        return SearchText(
+          fontSize: 13,
+          text: tagName,
+          onTap: (tag) => Get.toNamed(
+            '/searchResult',
+            parameters: {'keyword': tag},
+          ),
+          onLongPress: Utils.copyText,
+        );
+    }
   }
 }
