@@ -10,6 +10,9 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
+  errors:
+    # 项目名沿用上游大小写，不按 Dart 包名规范改名
+    package_names: ignore
   exclude:
     - lib/grpc/bilibili/**
     - lib/**/*.g.dart
@@ -20,7 +23,9 @@ analyzer:
     - windows/**
     - web/**
     - build/**
-    # - lib/common/widgets/flutter/**
+    - dist/**
+    # Flutter 控件副本，属 vendored 第三方代码，不按本项目 lint 规则检查
+    - lib/common/widgets/flutter/**
 
 formatter:
   trailing_commas: preserve

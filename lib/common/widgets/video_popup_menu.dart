@@ -1,7 +1,6 @@
 import 'package:PiliPlus/common/widgets/custom_icon.dart';
 import 'package:PiliPlus/http/user.dart';
 import 'package:PiliPlus/http/video.dart';
-import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/models/home/rcmd/result.dart';
 import 'package:PiliPlus/models/model_video.dart';
 import 'package:PiliPlus/models_new/space/space_archive/item.dart';
@@ -206,7 +205,7 @@ Future<void> _dislike(
     SmartDialog.showLoading(msg: '正在撤销');
     final bool ok = isAppRcmd
         ? (await VideoHttp.feedDislikeCancel(
-            id: (videoItem as RcmdVideoItemAppModel).param!,
+            id: (videoItem).param!,
             goto: videoItem.goto!,
           )).isSuccess
         : (await VideoHttp.dislikeVideo(bvid: bvid, type: false)).isSuccess;
@@ -222,7 +221,7 @@ Future<void> _dislike(
 
   SmartDialog.showLoading(msg: '正在提交');
   if (isAppRcmd) {
-    final item = videoItem as RcmdVideoItemAppModel;
+    final item = videoItem;
     final tp = item.threePoint;
     if (tp == null) {
       SmartDialog.dismiss();
