@@ -1,6 +1,7 @@
 import 'package:PiliPlus/http/dynamics.dart';
 import 'package:PiliPlus/http/loading_state.dart';
 import 'package:PiliPlus/http/msg.dart';
+import 'package:PiliPlus/http/sub_update.dart';
 import 'package:PiliPlus/models/common/dynamic/dynamics_type.dart';
 import 'package:PiliPlus/models/dynamics/result.dart';
 import 'package:PiliPlus/pages/common/common_list_controller.dart';
@@ -62,14 +63,66 @@ class DynamicsTabController
     return items;
   }
 
-  @override
-  Future<LoadingState<DynamicsDataModel>> customGetData() =>
-      DynamicsHttp.followDynamic(
-        offset: offset,
-        type: dynamicsType,
-        hostMid: dynamicsController.hostMid,
-        tempBannedList: dynamicsController.tempBannedList,
+  static int _newestFirst(DynamicItemModel a, DynamicItemModel b) =>
+      (b.modules.moduleAuthor?.pubTs ?? 0).compareTo(
+        a.modules.moduleAuthor?.pubTs ?? 0,
       );
+
+  /// 动态条目携带的稿件 bvid，转发原文也算；同一视频只保留一条
+  static String? _bvidOf(DynamicItemModel item) =>
+      item.videoBvid ?? item.orig?.videoBvid;
+
+  static String _identityOf(DynamicItemModel item) =>
+      _bvidOf(item) ?? '${item.idStr}';
+
+  @override
+  List<DynamicItemModel> dedupeOnAppend(
+    List<DynamicItemModel> existing,
+    List<DynamicItemModel> incoming,
+  ) {
+    // 首页注入的订阅条目在翻页时不能重复出现；正常动态之间保持原顺序
+    final subBvids = <String>{
+      for (final e in existing)
+        if ('${e.idStr}'.startsWith('sub_')) ?_bvidOf(e),
+    };
+    final seenIds = <String>{for (final e in existing) '${e.idStr}'};
+    return incoming.where((e) {
+      if (!seenIds.add('${e.idStr}')) return false;
+      final bvid = _bvidOf(e);
+      return bvid == null || !subBvids.contains(bvid);
+    }).toList();
+  }
+
+  @override
+  Future<LoadingState<DynamicsDataModel>> customGetData() async {
+    final res = await DynamicsHttp.followDynamic(
+      offset: offset,
+      type: dynamicsType,
+      hostMid: dynamicsController.hostMid,
+      tempBannedList: dynamicsController.tempBannedList,
+    );
+    // 只在首页合并订阅合集更新；失败完全不影响原有动态列表
+    if (offset == null && (dynamicsType == .all || dynamicsType == .video)) {
+      if (res case Success(:final response)) {
+        try {
+          final current = response.items ?? const <DynamicItemModel>[];
+          final seen = <String>{for (final e in current) _identityOf(e)};
+          final extras = (await SubUpdateHttp.dynamicItems())
+              .where((e) => seen.add(_identityOf(e)))
+              .toList();
+          if (extras.isNotEmpty) {
+            response.items = <DynamicItemModel>[
+              ...current,
+              ...extras,
+            ]..sort(_newestFirst);
+          }
+        } catch (_) {
+          // 订阅区块是附加数据，任何异常都不冒泡
+        }
+      }
+    }
+    return res;
+  }
 
   Future<void> onRemove(int index, dynamic dynamicId) async {
     final res = await MsgHttp.removeDynamic(dynIdStr: dynamicId);
